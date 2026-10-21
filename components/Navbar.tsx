@@ -28,7 +28,7 @@ export function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
   return (
-    <nav className="h-16 sm:h-17 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-6 sm:px-8 max-w-7xl w-full mx-auto flex items-center justify-between sticky top-0 z-40 transition-colors">
+    <nav className="h-16 sm:h-17 border-b border-zinc-200/80 dark:border-zinc-800/80 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-3 sm:px-8 max-w-7xl w-full mx-auto flex items-center justify-between sticky top-0 z-40 transition-colors">
       {/* Brand (Prominent & Bold) */}
       <Link href="/" className="flex items-center gap-3 group">
         <div className="relative h-10 w-10 sm:h-11 sm:w-11 flex items-center justify-center bg-transparent shrink-0">
@@ -184,20 +184,21 @@ export function Navbar() {
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-1.5 sm:gap-4">
         <ThemeToggle />
         <Link
           href="/login"
-          className="text-sm font-bold text-zinc-700 dark:text-zinc-200 hover:text-amber-500 dark:hover:text-amber-400 px-3.5 py-2 transition-colors cursor-pointer"
+          className="text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-200 hover:text-amber-500 dark:hover:text-amber-400 px-2 sm:px-3.5 py-1.5 sm:py-2 transition-colors cursor-pointer"
         >
           Log in
         </Link>
         <Link
           href="/signup"
-          className="flex items-center gap-2 rounded-full bg-amber-400 hover:bg-amber-300 active:scale-95 text-zinc-950 px-5 sm:px-6 py-2.5 text-sm font-bold shadow-md shadow-amber-400/20 transition-all cursor-pointer"
+          className="flex items-center gap-1.5 sm:gap-2 rounded-full bg-amber-400 hover:bg-amber-300 active:scale-95 text-zinc-950 px-3.5 sm:px-6 py-2 sm:py-2.5 text-xs sm:text-sm font-bold shadow-md shadow-amber-400/20 transition-all cursor-pointer whitespace-nowrap"
         >
-          <span>Track 1 Song Free</span>
-          <ArrowRight className="h-4 w-4" />
+          <span className="sm:hidden">Track Free</span>
+          <span className="hidden sm:inline">Track 1 Song Free</span>
+          <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </Link>
       </div>
     </nav>

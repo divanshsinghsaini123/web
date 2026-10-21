@@ -93,7 +93,7 @@ const FEATURED_SONGS: SongShowcase[] = [
     id: "song-1",
     audioId: "1805963283917482",
     title: "Tauba Tauba",
-    artist: "Karan Aujla & Vicky Kaushal",
+    artist: "Karan Aujla",
     genre: "Punjabi Pop / Dance",
     coverGradient: "from-amber-500 via-rose-500 to-purple-600",
     coverImageUrl: "/covers/tauba-tauba.jpg",
@@ -246,8 +246,8 @@ const FEATURED_SONGS: SongShowcase[] = [
   {
     id: "song-3",
     audioId: "694827105928",
-    title: "Aaj Ki Raat (Stree 2)",
-    artist: "Sachin-Jigar & Madhubanti Bagchi",
+    title: "Aaj Ki Raat",
+    artist: "Sachin-Jigar",
     genre: "Hindi Bollywood #1 Reels Hit",
     coverGradient: "from-rose-500 via-pink-600 to-red-500",
     coverImageUrl: "/covers/aaj-ki-raat.jpg",
@@ -500,7 +500,7 @@ export default function LandingPage() {
 
   const activeSong = FEATURED_SONGS[selectedSongIndex];
 
-  // Auto-scroll / rotate every 3 seconds (pauses on user hover)
+  // Auto-scroll / rotate every 3 seconds (pauses on user hover for hover-capable devices)
   useEffect(() => {
     if (isPaused) return;
     const interval = setInterval(() => {
@@ -508,6 +508,38 @@ export default function LandingPage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [isPaused]);
+
+  // Touch & hover handlers: only pause on true mouse hover, allow touch swipe on mobile
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+  const handleMouseEnter = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+      setIsPaused(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches) {
+      setIsPaused(false);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        setSelectedSongIndex((prev) => (prev + 1) % FEATURED_SONGS.length);
+      } else {
+        setSelectedSongIndex((prev) => (prev - 1 + FEATURED_SONGS.length) % FEATURED_SONGS.length);
+      }
+    }
+    setTouchStartX(null);
+  };
 
   // Handle URL Paste & Automatic Audio ID Extraction
   const handleInputChange = (raw: string) => {
@@ -553,22 +585,22 @@ export default function LandingPage() {
       <Navbar />
 
       {/* Hero Section */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-3 sm:pt-4 md:pt-5 pb-10 sm:pb-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          
-          {/* Left Column (Headline & Interactive Stem Checker) */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-1.5 sm:px-6 pt-3 sm:pt-4 md:pt-5 pb-10 sm:pb-14">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+
+          {/* Left Column (Headline & Value Props) */}
           <div className="lg:col-span-6 space-y-6">
-            <div className="inline-flex items-center gap-2.5 rounded-full border-2 border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-violet-500/15 pl-2 pr-4 py-1.5 text-xs sm:text-sm font-mono shadow-lg shadow-amber-500/15 backdrop-blur-sm">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 px-3 py-1 text-xs font-black uppercase tracking-wider shadow-sm">
-                <Sparkles className="h-3.5 w-3.5 fill-zinc-950" />
+            <div className="inline-flex items-center gap-2 rounded-full border-2 border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-amber-400/10 to-violet-500/15 pl-1.5 pr-3 py-1 sm:pl-2 sm:pr-4 sm:py-1.5 text-xs sm:text-sm font-mono shadow-lg shadow-amber-500/15 backdrop-blur-sm max-w-full">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-black uppercase tracking-wider shadow-sm shrink-0">
+                <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-zinc-950" />
                 AI-POWERED
               </span>
-              <span className="font-extrabold tracking-wide text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm">
+              <span className="font-extrabold tracking-wide text-zinc-900 dark:text-zinc-100 text-[11px] sm:text-sm truncate">
                 Reels Audio Velocity Radar
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.08]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12] sm:leading-[1.08]">
               In music releases,{" "}
               <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-violet-500 bg-clip-text text-transparent">
                 audio velocity
@@ -576,12 +608,12 @@ export default function LandingPage() {
               decides the hit.
             </h1>
 
-            <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-lg leading-relaxed">
+            {/* <p className="text-base text-zinc-600 dark:text-zinc-400 max-w-lg leading-relaxed">
               Real-time creator adoption and daily Reels video plays across your catalog.
-            </p>
+            </p> */}
 
-            {/* Interactive Audio Checker Bar (Paste URL -> Auto Extract ID) */}
-            <div className="pt-2">
+            {/* Interactive Audio Checker Bar (Paste URL -> Auto Extract ID) - DESKTOP ONLY */}
+            <div className="hidden lg:block pt-2">
               <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 block mb-2">
                 Paste Instagram Audio URL or numerical ID:
               </span>
@@ -599,7 +631,7 @@ export default function LandingPage() {
                   className="flex items-center gap-1.5 rounded-full bg-amber-400 hover:bg-amber-300 text-zinc-950 px-5 py-2.5 text-xs sm:text-sm font-bold shadow-xs shrink-0 transition-all cursor-pointer"
                 >
                   <Search className="h-3.5 w-3.5" />
-                  Track Live
+                  <span>Track Live</span>
                 </Link>
               </div>
 
@@ -623,7 +655,7 @@ export default function LandingPage() {
                 >
                   1805963283917482 (Tauba Tauba - Karan Aujla)
                 </button>
-                <button
+                {/* <button
                   type="button"
                   onClick={() => {
                     setAudioInput("839104829104");
@@ -652,18 +684,54 @@ export default function LandingPage() {
                   className="rounded-full bg-zinc-100 dark:bg-zinc-800/80 px-3.5 py-1.5 text-xs font-mono font-medium text-zinc-700 dark:text-zinc-300 hover:bg-amber-400/20 hover:text-amber-500 transition-colors cursor-pointer"
                 >
                   582910482914 (Cheques - Shubh)
-                </button>
+                </button> */}
               </div>
+            </div>
+
+            {/* Quick Trust / Telemetry Metrics - DESKTOP ONLY */}
+            <div className="hidden lg:grid grid-cols-3 gap-3 pt-2 max-w-lg">
+              <div className="p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 shadow-xs backdrop-blur-sm">
+                <div className="text-xl sm:text-2xl font-mono font-black text-zinc-950 dark:text-zinc-50">1.8M+</div>
+                <div className="text-[11px] font-mono text-zinc-500 font-semibold pt-0.5">Reels Indexed</div>
+              </div>
+              <div className="p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 shadow-xs backdrop-blur-sm">
+                <div className="text-xl sm:text-2xl font-mono font-black text-amber-500">&lt; 15s</div>
+                <div className="text-[11px] font-mono text-zinc-500 font-semibold pt-0.5">Scraper Speed</div>
+              </div>
+              <div className="p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 shadow-xs backdrop-blur-sm">
+                <div className="text-xl sm:text-2xl font-mono font-black text-emerald-500">99.4%</div>
+                <div className="text-[11px] font-mono text-zinc-500 font-semibold pt-0.5">Audio Match</div>
+              </div>
+            </div>
+
+            {/* Quick Actions / CTA Buttons - DESKTOP ONLY */}
+            <div className="hidden lg:flex items-center gap-3 pt-1 flex-wrap">
+              <Link
+                href="/signup"
+                className="inline-flex items-center gap-2 rounded-2xl bg-amber-400 hover:bg-amber-300 text-zinc-950 px-6 py-3 text-sm font-black shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+              >
+                <span>Track 1 Song Free</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-5 py-3 text-sm font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+              >
+                <span>View Pricing</span>
+              </Link>
             </div>
           </div>
 
-          {/* Right Column (Hero Live Metrics + Daily Reels Creation Graph) */}
+          {/* Right Column (Hero Live Metrics + Interactive Search Bar Directly After) */}
           <div
-            className="lg:col-span-6 space-y-4"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
+            className="lg:col-span-6 space-y-4 w-full"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
           >
-            <div className="relative rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 p-6 sm:p-7 shadow-2xl backdrop-blur-md overflow-hidden">
+            {/* =========================================================================
+                DESKTOP VIEW (hidden lg:block): EXACT 100% UNTOUCHED ORIGINAL CARD
+                ========================================================================= */}
+            <div className="hidden lg:block relative rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/50 p-6 sm:p-7 shadow-2xl backdrop-blur-md overflow-hidden">
               {/* Subtle Ambient Glow */}
               <div className="absolute -top-12 -right-12 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -775,9 +843,8 @@ export default function LandingPage() {
                       <div key={bar.day} className="flex-1 flex flex-col items-center gap-1 group">
                         <div className="w-full bg-zinc-200 dark:bg-zinc-800 rounded-sm h-12 flex items-end overflow-hidden">
                           <div
-                            className={`w-full rounded-sm transition-all duration-300 ${
-                              bar.active ? "bg-amber-400" : "bg-zinc-400 dark:bg-zinc-600 group-hover:bg-amber-400/60"
-                            }`}
+                            className={`w-full rounded-sm transition-all duration-300 ${bar.active ? "bg-amber-400" : "bg-zinc-400 dark:bg-zinc-600 group-hover:bg-amber-400/60"
+                              }`}
                             style={{ height: bar.h }}
                           />
                         </div>
@@ -828,37 +895,306 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+
+            {/* ===================================================================
+                MOBILE VIEW (block lg:hidden): Mobile-optimized Card + Search Bar
+                =================================================================== */}
+            <div className="block lg:hidden space-y-4 w-full">
+              {/* Monitored Release Card (Mobile edge-to-edge design) */}
+              <div
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+                className="relative rounded-2xl border border-zinc-200/90 dark:border-zinc-800/90 bg-white/95 dark:bg-[#121217]/95 p-3.5 shadow-2xl backdrop-blur-xl overflow-hidden space-y-3.5 w-full select-none"
+              >
+                {/* Dynamic Ambient Glow */}
+                <div
+                  className="absolute -top-14 -right-14 w-52 h-52 rounded-full blur-3xl pointer-events-none transition-colors duration-500 opacity-20"
+                  style={{ backgroundColor: activeSong.color || "#f59e0b" }}
+                />
+
+                {/* 1. Header Status + Swap Controls */}
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800/80">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 px-3 py-1 text-[11px] font-mono font-black uppercase tracking-wider shadow-xs flex items-center gap-1.5">
+                      <Disc3 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Monitored Release</span>
+                    </span>
+                    <span className="rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 px-2.5 py-0.5 text-[11px] font-mono font-bold text-zinc-500">
+                      {selectedSongIndex + 1} / {FEATURED_SONGS.length}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/90 p-0.5 rounded-full border border-zinc-200 dark:border-zinc-700 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedSongIndex(
+                          (prev) => (prev - 1 + FEATURED_SONGS.length) % FEATURED_SONGS.length
+                        )
+                      }
+                      className="h-7 w-7 rounded-full bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 hover:bg-amber-400 hover:text-zinc-950 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-90"
+                      title="Previous Track"
+                      aria-label="Previous Track"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <span className="text-[10px] font-mono font-bold text-zinc-400 px-1">Swipe</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedSongIndex((prev) => (prev + 1) % FEATURED_SONGS.length)
+                      }
+                      className="h-7 w-7 rounded-full bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 hover:bg-amber-400 hover:text-zinc-950 flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-90"
+                      title="Next Track"
+                      aria-label="Next Track"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Track Identity Banner */}
+                <div className="flex items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden shadow-md border border-zinc-200 dark:border-zinc-800 shrink-0">
+                      <Image
+                        src={activeSong.coverImageUrl}
+                        alt={activeSong.title}
+                        fill
+                        className="object-cover"
+                        priority
+                      />
+                      <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-500 text-zinc-950 flex items-center justify-center text-[10px] font-black shadow-xs ring-2 ring-white dark:ring-zinc-900">
+                        ♫
+                      </span>
+                    </div>
+                    <div className="min-w-0 space-y-0.5">
+                      <h3 className="font-black text-base text-zinc-950 dark:text-zinc-50 tracking-tight truncate leading-tight">
+                        {activeSong.title}
+                      </h3>
+                      <p className="text-xs font-mono text-zinc-500 dark:text-zinc-400 truncate">
+                        Artist: <strong className="text-zinc-800 dark:text-zinc-200">{activeSong.artist}</strong>
+                      </p>
+                      <div className="flex items-center gap-1.5 pt-0.5">
+                        <span className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800/80 text-[10px] font-mono font-semibold text-zinc-600 dark:text-zinc-400">
+                          ID: {activeSong.audioId}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0">
+                    <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-xs font-mono font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 shadow-2xs">
+                      <Flame className="w-3.5 h-3.5 fill-current" />
+                      <span>Trending #{selectedSongIndex + 1}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3. 3 High-Impact Metric Cards */}
+                <div className="grid grid-cols-3 gap-1.5 pt-1">
+                  <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] dark:bg-emerald-950/20 p-2 flex flex-col justify-between shadow-2xs">
+                    <span className="text-[8px] font-mono font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
+                      REELS INDEXED
+                    </span>
+                    <p className="text-base font-black font-mono text-zinc-950 dark:text-zinc-50 my-0.5 tracking-tight">
+                      {activeSong.totalReels}
+                    </p>
+                    <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono font-bold truncate block">
+                      {activeSong.velocity24h}
+                    </span>
+                  </div>
+
+                  <div className="rounded-xl border border-sky-500/30 bg-sky-500/[0.05] dark:bg-sky-950/20 p-2 flex flex-col justify-between shadow-2xs">
+                    <span className="text-[8px] font-mono font-black uppercase tracking-wider text-sky-600 dark:text-sky-400 block">
+                      VIDEO PLAYS
+                    </span>
+                    <p className="text-base font-black font-mono text-zinc-950 dark:text-zinc-50 my-0.5 tracking-tight">
+                      14.8M
+                    </p>
+                    <span className="text-[9px] text-zinc-500 dark:text-zinc-400 font-mono font-semibold truncate block">
+                      Total reach
+                    </span>
+                  </div>
+
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/[0.05] dark:bg-amber-950/20 p-2 flex flex-col justify-between shadow-2xs">
+                    <span className="text-[8px] font-mono font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
+                      VIRALITY INDEX
+                    </span>
+                    <p className="text-base font-black font-mono text-amber-500 my-0.5 tracking-tight">
+                      {activeSong.viralityScore}%
+                    </p>
+                    <span className="text-[9px] text-amber-600 dark:text-amber-400 font-mono font-bold truncate block">
+                      Accelerating
+                    </span>
+                  </div>
+                </div>
+
+                {/* 4. Daily New Reels Creation Graph (7 Days) */}
+                <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-mono text-zinc-500">
+                    <span className="font-bold">Daily Reels Velocity (Last 7 Days)</span>
+                    <span className="text-emerald-500 font-black">{activeSong.velocity24h}</span>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1.5 h-18 items-end pt-1">
+                    {activeSong.dailyGraph.map((bar) => (
+                      <div key={bar.day} className="flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer">
+                        <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-lg h-full flex flex-col justify-end p-0.5 overflow-hidden">
+                          <div
+                            className={`w-full rounded-md transition-all duration-300 ${bar.active
+                              ? "bg-amber-500 shadow-sm shadow-amber-500/40"
+                              : "bg-zinc-300 dark:bg-zinc-600 group-hover:bg-amber-400/70"
+                              }`}
+                            style={{ height: bar.h }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-mono font-bold text-zinc-500">{bar.day}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 5. Live Equalizer Pulse */}
+                <div className="pt-2 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/80 text-xs font-mono text-zinc-500">
+                  <span className="font-bold">Live Momentum Pulse</span>
+                  <SoundWaveSVG className="w-24 h-5 opacity-90 text-amber-500" />
+                </div>
+
+                {/* 6. Top Viral Creator VIP Banner */}
+                <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/60 p-2.5 flex items-center justify-between gap-2.5 shadow-2xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500/40 shrink-0 shadow-xs">
+                      <Image
+                        src={activeSong.topCreators[0].avatarUrl}
+                        alt={activeSong.topCreators[0].username}
+                        fill
+                        className="object-cover"
+                      />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-sky-500 text-white flex items-center justify-center text-[8px] font-bold ring-1 ring-white dark:ring-zinc-900">
+                        ✓
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-black text-xs text-zinc-950 dark:text-zinc-50 truncate">
+                          @{activeSong.topCreators[0].username}
+                        </span>
+                        <span className="px-1.5 py-0.2 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-mono text-[8px] font-bold">
+                          #1
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                        {activeSong.topCreators[0].impactTag} • {activeSong.topCreators[0].followers}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <span className="font-mono font-black text-xs text-amber-500 block">
+                      {activeSong.topCreators[0].videoPlays} plays
+                    </span>
+                    <span className="text-[9px] text-zinc-400 font-mono font-semibold">
+                      {activeSong.topCreators[0].likes} likes
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* The Search Bar directly after Monitored Release on Mobile */}
+              <div className="space-y-2 pt-1 w-full">
+                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 block px-1">
+                  Paste Instagram Audio URL or numerical ID:
+                </span>
+                <div className="relative flex items-center rounded-xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900/90 p-1 shadow-lg shadow-zinc-200/50 dark:shadow-[0_8px_25px_rgba(0,0,0,0.5)] focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/20 transition-all w-full">
+                  <Search className="h-4 w-4 text-zinc-400 ml-2.5 shrink-0" />
+                  <input
+                    type="text"
+                    value={audioInput}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    placeholder="Paste https://www.instagram.com/reels/audio/... or ID"
+                    className="w-full bg-transparent px-2 text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-hidden"
+                  />
+                  <Link
+                    href={`/signup?audio=${encodeURIComponent(audioInput)}`}
+                    className="flex items-center gap-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-zinc-950 px-3.5 py-2 text-xs sm:text-sm font-black shadow-xs shrink-0 transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    <span>Track Live</span>
+                  </Link>
+                </div>
+
+                {/* Automatic Extraction Notification Badge */}
+                {extractedNotice && (
+                  <div className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 text-xs font-mono font-semibold text-emerald-600 dark:text-emerald-400">
+                    <Link2 className="h-3.5 w-3.5" />
+                    <span>{extractedNotice}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Trust / Telemetry Metrics (Mobile: full width edge-to-edge, centered) */}
+              <div className="w-full grid grid-cols-3 gap-2 pt-1">
+                <div className="p-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 shadow-xs backdrop-blur-sm text-center flex flex-col items-center justify-center">
+                  <div className="text-lg font-mono font-black text-zinc-950 dark:text-zinc-50">1.8M+</div>
+                  <div className="text-[10px] font-mono text-zinc-500 font-semibold pt-0.5 whitespace-nowrap">Reels Indexed</div>
+                </div>
+                <div className="p-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 shadow-xs backdrop-blur-sm text-center flex flex-col items-center justify-center">
+                  <div className="text-lg font-mono font-black text-amber-500">&lt; 15s</div>
+                  <div className="text-[10px] font-mono text-zinc-500 font-semibold pt-0.5 whitespace-nowrap">Scraper Speed</div>
+                </div>
+                <div className="p-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white/70 dark:bg-zinc-900/60 shadow-xs backdrop-blur-sm text-center flex flex-col items-center justify-center">
+                  <div className="text-lg font-mono font-black text-emerald-500">99.4%</div>
+                  <div className="text-[10px] font-mono text-zinc-500 font-semibold pt-0.5 whitespace-nowrap">Audio Match</div>
+                </div>
+              </div>
+
+              {/* Quick Actions / CTA Buttons (Mobile: full width side-by-side, centered) */}
+              <div className="flex items-center justify-center gap-2.5 pt-1 w-full">
+                <Link
+                  href="/signup"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 px-3 py-3 text-xs sm:text-sm font-black shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer text-center"
+                >
+                  <span>Track 1 Song Free</span>
+                  <ArrowRight className="w-3.5 h-3.5 shrink-0" />
+                </Link>
+                <Link
+                  href="/pricing"
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-3 text-xs sm:text-sm font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all cursor-pointer text-center"
+                >
+                  <span>View Pricing</span>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* =========================================================================
             SECTION 1: MULTI-ROLE BRAND SPONSOR & ARTIST MANAGER PORTAL
             ========================================================================= */}
-        <section id="roles" className="my-10 sm:my-14 p-6 sm:p-10 rounded-3xl bg-zinc-50/80 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 shadow-sm">
-          <div className="text-center max-w-3xl mx-auto mb-8">
+        <section id="roles" className="my-8 sm:my-14 p-1.5 sm:p-10 rounded-2xl sm:rounded-3xl bg-zinc-50/80 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 shadow-sm w-full">
+          <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-8">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-blue-500 block mb-2">
               Sponsor &amp; Manager Operations
             </span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12]">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12]">
               Give Brand Sponsors Live Proof.{" "}
               <span className="bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 bg-clip-text text-transparent">
                 Give Managers Full Control.
               </span>
             </h2>
-            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-2.5">
+            <p className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 mt-2 sm:mt-2.5">
               Verified third-party campaign audit links for sponsors, automated scan scheduling for artist managers.
             </p>
 
             {/* Interactive Role Switcher Tabs */}
-            <div className="inline-flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/80 p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 mt-6 shadow-xs">
+            <div className="inline-flex flex-wrap sm:flex-nowrap items-center justify-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/80 p-1 sm:p-1.5 rounded-2xl border border-zinc-200 dark:border-zinc-700 mt-5 sm:mt-6 shadow-xs max-w-full">
               <button
                 type="button"
                 onClick={() => setSelectedRole("sponsor")}
-                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  selectedRole === "sponsor"
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
-                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
-                }`}
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 ${selectedRole === "sponsor"
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                  }`}
               >
                 <Building2 className="h-4 w-4" />
                 <span>Brand Sponsor View</span>
@@ -866,11 +1202,10 @@ export default function LandingPage() {
               <button
                 type="button"
                 onClick={() => setSelectedRole("manager")}
-                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  selectedRole === "manager"
-                    ? "bg-amber-400 text-zinc-950 shadow-md shadow-amber-400/30"
-                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
-                }`}
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 ${selectedRole === "manager"
+                  ? "bg-amber-400 text-zinc-950 shadow-md shadow-amber-400/30"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                  }`}
               >
                 <UserCheck className="h-4 w-4" />
                 <span>Artist Manager Mode</span>
@@ -878,11 +1213,10 @@ export default function LandingPage() {
               <button
                 type="button"
                 onClick={() => setSelectedRole("owner")}
-                className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
-                  selectedRole === "owner"
-                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-md"
-                    : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
-                }`}
+                className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 ${selectedRole === "owner"
+                  ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-md"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                  }`}
               >
                 <ShieldCheck className="h-4 w-4" />
                 <span>Label Owner (Admin)</span>
@@ -890,84 +1224,84 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Role Preview Container */}
-          <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-6 sm:p-8 shadow-xl">
+          {/* Role Preview Container (Wider inner width on mobile) */}
+          <div className="rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-2 sm:p-8 shadow-xl w-full">
             {/* SPONSOR ROLE VIEW */}
             {selectedRole === "sponsor" && (
-              <div className="space-y-6 animate-in fade-in duration-200">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-4">
-                  <div className="flex items-center gap-3.5">
-                    <div className="h-12 w-12 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl border border-blue-500/20">
-                      <Building2 className="h-6 w-6" />
+              <div className="space-y-4 sm:space-y-6 animate-in fade-in duration-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-3 sm:pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-lg sm:text-xl border border-blue-500/20 shrink-0">
+                      <Building2 className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-base text-zinc-900 dark:text-zinc-100">
+                        <span className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100">
                           boAt Lifestyle &bull; Sponsored Track Campaign Audit
                         </span>
-                        <span className="px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono text-[10px] font-bold">
+                        <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono text-[10px] font-bold">
                           Live Sponsor Telemetry
                         </span>
                       </div>
-                      <p className="text-xs text-zinc-500 mt-0.5">
-                        Track: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{activeSong.title} ({activeSong.artist})</span> &bull; Access Level: Read-Only Campaign ROI Audit
+                      <p className="text-[11px] sm:text-xs text-zinc-500 mt-0.5">
+                        Track: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{activeSong.title} ({activeSong.artist})</span> &bull;
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-emerald-500 font-bold bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                      <CheckCircle2 className="h-4 w-4" />
+                    <span className="text-[11px] sm:text-xs font-mono text-emerald-500 font-bold bg-emerald-500/10 border border-emerald-500/20 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full flex items-center gap-1.5 w-fit">
+                      <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       100% Third-Party Verified Audit
                     </span>
                   </div>
                 </div>
 
-                {/* Sponsor Telemetry Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-4 border border-zinc-200/80 dark:border-zinc-700">
-                    <div className="flex items-center justify-between mb-1.5">
+                {/* Sponsor Telemetry Cards (Decreased size in mobile view only) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
+                  <div className="rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-2.5 sm:p-4 border border-zinc-200/80 dark:border-zinc-700">
+                    <div className="flex items-center justify-between mb-1 sm:mb-1.5">
                       <span className="text-[10px] font-mono uppercase text-zinc-400 font-semibold">Total Video Plays</span>
-                      <div className="h-8 w-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                        <Eye className="h-4 w-4" />
+                      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                        <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </div>
                     </div>
-                    <p className="text-2xl font-bold font-mono text-zinc-900 dark:text-zinc-100">24.8M</p>
-                    <span className="text-[11px] text-emerald-500 font-bold flex items-center gap-1 mt-1">
-                      <TrendingUp className="h-3.5 w-3.5" /> +184% vs Campaign Target
+                    <p className="text-xl sm:text-2xl font-bold font-mono text-zinc-900 dark:text-zinc-100">24.8M</p>
+                    <span className="text-[10px] sm:text-[11px] text-emerald-500 font-bold flex items-center gap-1 mt-0.5 sm:mt-1">
+                      <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> +184% vs Campaign Target
                     </span>
                   </div>
 
-                  <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-4 border border-zinc-200/80 dark:border-zinc-700">
-                    <div className="flex items-center justify-between mb-1.5">
+                  <div className="rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-2.5 sm:p-4 border border-zinc-200/80 dark:border-zinc-700">
+                    <div className="flex items-center justify-between mb-1 sm:mb-1.5">
                       <span className="text-[10px] font-mono uppercase text-zinc-400 font-semibold">Reels Created with Audio</span>
-                      <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                        <Flame className="h-4 w-4" />
+                      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                        <Flame className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </div>
                     </div>
-                    <p className="text-2xl font-bold font-mono text-amber-500">{activeSong.totalReels}</p>
-                    <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 block">Indexed by Instagram AI Scraper</span>
+                    <p className="text-xl sm:text-2xl font-bold font-mono text-amber-500">{activeSong.totalReels}</p>
+                    <span className="text-[10px] sm:text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5 sm:mt-1 block">Indexed by Instagram AI Scraper</span>
                   </div>
 
-                  <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-4 border border-zinc-200/80 dark:border-zinc-700">
-                    <div className="flex items-center justify-between mb-1.5">
+                  <div className="rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-2.5 sm:p-4 border border-zinc-200/80 dark:border-zinc-700">
+                    <div className="flex items-center justify-between mb-1 sm:mb-1.5">
                       <span className="text-[10px] font-mono uppercase text-zinc-400 font-semibold">Top Influencer Partner</span>
-                      <div className="h-8 w-8 rounded-lg bg-violet-500/10 text-violet-500 flex items-center justify-center">
-                        <Award className="h-4 w-4" />
+                      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-violet-500/10 text-violet-500 flex items-center justify-center">
+                        <Award className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </div>
                     </div>
-                    <p className="text-lg font-bold text-zinc-900 dark:text-zinc-100">@{activeSong.topCreators[0].username}</p>
-                    <span className="text-[11px] text-violet-500 font-semibold block mt-1">{activeSong.topCreators[0].videoPlays} plays generated</span>
+                    <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100">@{activeSong.topCreators[0].username}</p>
+                    <span className="text-[10px] sm:text-[11px] text-violet-500 font-semibold block mt-0.5 sm:mt-1">{activeSong.topCreators[0].videoPlays} plays generated</span>
                   </div>
 
-                  <div className="rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-4 border border-zinc-200/80 dark:border-zinc-700 flex flex-col justify-between">
+                  <div className="rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 p-2.5 sm:p-4 border border-zinc-200/80 dark:border-zinc-700 flex flex-col justify-between">
                     <div>
-                      <span className="text-[10px] font-mono uppercase text-zinc-400 block font-semibold mb-1">Audit Export</span>
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400">Export timestamped spreadsheet with verified links for boardroom audit.</p>
+                      <span className="text-[10px] font-mono uppercase text-zinc-400 block font-semibold mb-0.5 sm:mb-1">Audit Export</span>
+                      <p className="text-[11px] sm:text-xs text-zinc-600 dark:text-zinc-400 leading-snug">Export timestamped spreadsheet with verified links for boardroom audit.</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleGenerateReport("Sponsor Audit Spreadsheet")}
-                      className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white py-2 text-xs font-bold transition-all shadow-sm cursor-pointer"
+                      className="mt-2.5 sm:mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white py-1.5 sm:py-2 text-[11px] sm:text-xs font-bold transition-all shadow-sm cursor-pointer"
                     >
                       <Download className="h-3.5 w-3.5" />
                       <span>Download Audit (.xlsx)</span>
@@ -1059,11 +1393,10 @@ export default function LandingPage() {
                     <button
                       type="button"
                       onClick={() => setScanFrequency("hourly")}
-                      className={`p-2 sm:p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
-                        scanFrequency === "hourly"
-                          ? "border-amber-400 bg-amber-400/10 dark:bg-amber-400/5 shadow-2xs"
-                          : "border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 hover:border-zinc-300"
-                      }`}
+                      className={`p-2 sm:p-2.5 rounded-lg border text-left transition-all cursor-pointer ${scanFrequency === "hourly"
+                        ? "border-amber-400 bg-amber-400/10 dark:bg-amber-400/5 shadow-2xs"
+                        : "border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 hover:border-zinc-300"
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100">Hourly AI Crawl</span>
@@ -1076,11 +1409,10 @@ export default function LandingPage() {
                     <button
                       type="button"
                       onClick={() => setScanFrequency("6h")}
-                      className={`p-2 sm:p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
-                        scanFrequency === "6h"
-                          ? "border-amber-400 bg-amber-400/10 dark:bg-amber-400/5 shadow-2xs"
-                          : "border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 hover:border-zinc-300"
-                      }`}
+                      className={`p-2 sm:p-2.5 rounded-lg border text-left transition-all cursor-pointer ${scanFrequency === "6h"
+                        ? "border-amber-400 bg-amber-400/10 dark:bg-amber-400/5 shadow-2xs"
+                        : "border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 hover:border-zinc-300"
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100">Every 6 Hours</span>
@@ -1093,11 +1425,10 @@ export default function LandingPage() {
                     <button
                       type="button"
                       onClick={() => setScanFrequency("daily")}
-                      className={`p-2 sm:p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
-                        scanFrequency === "daily"
-                          ? "border-amber-400 bg-amber-400/10 dark:bg-amber-400/5 shadow-2xs"
-                          : "border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 hover:border-zinc-300"
-                      }`}
+                      className={`p-2 sm:p-2.5 rounded-lg border text-left transition-all cursor-pointer ${scanFrequency === "daily"
+                        ? "border-amber-400 bg-amber-400/10 dark:bg-amber-400/5 shadow-2xs"
+                        : "border-zinc-200 dark:border-zinc-700/60 bg-white dark:bg-zinc-900 hover:border-zinc-300"
+                        }`}
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100">Daily Nightly Sync</span>
@@ -1116,7 +1447,50 @@ export default function LandingPage() {
                     Manager On-Demand Report Generation Suite
                   </h4>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* MOBILE VIEW (sm:hidden): All 3 in one single horizontal line, only logo and title */}
+                  <div className="grid sm:hidden grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateReport("Boardroom Excel Report (.xlsx)")}
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-700/70 bg-white dark:bg-zinc-900 p-2.5 flex flex-col items-center justify-center text-center gap-1.5 active:scale-95 transition-all shadow-xs cursor-pointer"
+                    >
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center border border-emerald-500/20">
+                        <FileSpreadsheet className="h-5 w-5" />
+                      </div>
+                      <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 leading-tight">
+                        Boardroom Excel
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateReport("WhatsApp 24h Debrief")}
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-700/70 bg-white dark:bg-zinc-900 p-2.5 flex flex-col items-center justify-center text-center gap-1.5 active:scale-95 transition-all shadow-xs cursor-pointer"
+                    >
+                      <div className="h-9 w-9 rounded-xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center border border-emerald-600/20">
+                        <MessageSquare className="h-5 w-5" />
+                      </div>
+                      <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 leading-tight">
+                        WhatsApp Debrief
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateReport("Brand Sponsor ROI Audit")}
+                      className="rounded-xl border border-zinc-200 dark:border-zinc-700/70 bg-white dark:bg-zinc-900 p-2.5 flex flex-col items-center justify-center text-center gap-1.5 active:scale-95 transition-all shadow-xs cursor-pointer"
+                    >
+                      <div className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center border border-blue-500/20">
+                        <ShieldCheck className="h-5 w-5" />
+                      </div>
+                      <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 leading-tight">
+                        Sponsor ROI
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* DESKTOP VIEW (hidden sm:grid): 100% UNTOUCHED ORIGINAL DESKTOP CARDS */}
+                  <div className="hidden sm:grid sm:grid-cols-3 gap-4">
                     {/* Report 1 */}
                     <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700/70 bg-white dark:bg-zinc-900 p-4 space-y-3 flex flex-col justify-between">
                       <div className="space-y-2">
@@ -1182,8 +1556,8 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                {/* Feature 3: Influencer Outreach Queue */}
-                <div className="rounded-2xl border border-zinc-200 dark:border-zinc-700/80 bg-zinc-50/70 dark:bg-zinc-800/40 p-5 space-y-3">
+                {/* Feature 3: Influencer Outreach Queue (Hidden on mobile only) */}
+                <div className="hidden sm:block rounded-2xl border border-zinc-200 dark:border-zinc-700/80 bg-zinc-50/70 dark:bg-zinc-800/40 p-5 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="h-8 w-8 rounded-lg bg-violet-500/10 text-violet-500 flex items-center justify-center">
@@ -1296,23 +1670,23 @@ export default function LandingPage() {
         {/* =========================================================================
             SECTION 2: MULTI-TRACK VELOCITY COMPARISON SECTION
             ========================================================================= */}
-        <section id="compare" className="my-10 sm:my-14 p-6 sm:p-10 rounded-3xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 shadow-sm">
-          <div className="text-center max-w-3xl mx-auto mb-8">
+        <section id="compare" className="my-8 sm:my-14 p-1.5 sm:p-10 rounded-2xl sm:rounded-3xl bg-white dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 shadow-sm w-full">
+          <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-8">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-500 block mb-2">
               Cross-Catalog Benchmarking
             </span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12]">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12]">
               Spot the Next Breakout Track{" "}
               <span className="bg-gradient-to-r from-amber-500 via-rose-500 to-violet-500 bg-clip-text text-transparent">
                 Before the Charts Do.
               </span>
             </h2>
-            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-2.5">
+            <p className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 mt-2 sm:mt-2.5">
               Side-by-side daily Reels compounding curves and audio velocity across your full release catalog.
             </p>
 
             {/* Toggle Track Comparison Chips */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-5 sm:mt-6">
               {FEATURED_SONGS.map((song) => {
                 const isSelected = comparisonTrackIds.includes(song.id);
                 return (
@@ -1320,81 +1694,80 @@ export default function LandingPage() {
                     key={song.id}
                     type="button"
                     onClick={() => toggleComparisonTrack(song.id)}
-                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                      isSelected
-                        ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm"
-                        : "bg-zinc-100 dark:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200"
-                    }`}
+                    className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 sm:gap-2 cursor-pointer ${isSelected
+                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm"
+                      : "bg-zinc-100 dark:bg-zinc-800/70 text-zinc-400 hover:text-zinc-200"
+                      }`}
                   >
                     <span
-                      className="h-2.5 w-2.5 rounded-full"
+                      className="h-2.5 w-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: song.color }}
                     />
                     <span>{song.title}</span>
-                    {isSelected && <Check className="h-3 w-3" />}
+                    {isSelected && <Check className="h-3 w-3 shrink-0" />}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Comparative Bar Chart Matrix */}
-          <div className="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/70 p-6 sm:p-8 shadow-xl">
+          {/* Comparative Bar Chart Matrix (Wider mobile width) */}
+          <div className="rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/70 p-2.5 sm:p-8 shadow-xl w-full">
             {/* Top comparison summary pills - 4 DISTINCT COLORS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 flex items-center gap-3.5">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6 sm:mb-8">
+              <div className="rounded-xl sm:rounded-2xl border border-amber-500/30 bg-amber-500/5 p-2.5 sm:p-4 flex items-center gap-3">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center font-bold text-sm sm:text-base shrink-0">
                   🏆
                 </div>
                 <div>
-                  <span className="text-[11px] font-mono uppercase text-zinc-400 block font-semibold">Punjabi Dance Pop</span>
-                  <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Tauba Tauba (+12.4K/day)</p>
+                  <span className="text-[10px] sm:text-[11px] font-mono uppercase text-zinc-400 block font-semibold">Punjabi Dance Pop</span>
+                  <p className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">Tauba Tauba (+12.4K/day)</p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-violet-500/30 bg-violet-500/5 p-4 flex items-center gap-3.5">
-                <div className="h-10 w-10 rounded-xl bg-violet-500/20 text-violet-500 flex items-center justify-center font-bold">
+              <div className="rounded-xl sm:rounded-2xl border border-violet-500/30 bg-violet-500/5 p-2.5 sm:p-4 flex items-center gap-3">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-violet-500/20 text-violet-500 flex items-center justify-center font-bold text-sm sm:text-base shrink-0">
                   ⚡
                 </div>
                 <div>
-                  <span className="text-[11px] font-mono uppercase text-zinc-400 block font-semibold">Global Loyalty</span>
-                  <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Born to Shine (+7.8K/day)</p>
+                  <span className="text-[10px] sm:text-[11px] font-mono uppercase text-zinc-400 block font-semibold">Global Loyalty</span>
+                  <p className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">Born to Shine (+7.8K/day)</p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/5 p-4 flex items-center gap-3.5">
-                <div className="h-10 w-10 rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center font-bold">
+              <div className="rounded-xl sm:rounded-2xl border border-rose-500/30 bg-rose-500/5 p-2.5 sm:p-4 flex items-center gap-3">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-rose-500/20 text-rose-500 flex items-center justify-center font-bold text-sm sm:text-base shrink-0">
                   🔥
                 </div>
                 <div>
-                  <span className="text-[11px] font-mono uppercase text-zinc-400 block font-semibold">#1 Hindi Velocity</span>
-                  <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Aaj Ki Raat (+18.9K/day)</p>
+                  <span className="text-[10px] sm:text-[11px] font-mono uppercase text-zinc-400 block font-semibold">#1 Hindi Velocity</span>
+                  <p className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">Aaj Ki Raat (+18.9K/day)</p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/5 p-4 flex items-center gap-3.5">
-                <div className="h-10 w-10 rounded-xl bg-cyan-500/20 text-cyan-500 flex items-center justify-center font-bold">
+              <div className="rounded-xl sm:rounded-2xl border border-cyan-500/30 bg-cyan-500/5 p-2.5 sm:p-4 flex items-center gap-3">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg sm:rounded-xl bg-cyan-500/20 text-cyan-500 flex items-center justify-center font-bold text-sm sm:text-base shrink-0">
                   📈
                 </div>
                 <div>
-                  <span className="text-[11px] font-mono uppercase text-zinc-400 block font-semibold">Desi Trap Wave</span>
-                  <p className="font-bold text-sm text-zinc-900 dark:text-zinc-100">Cheques (+9.6K/day)</p>
+                  <span className="text-[10px] sm:text-[11px] font-mono uppercase text-zinc-400 block font-semibold">Desi Trap Wave</span>
+                  <p className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">Cheques (+9.6K/day)</p>
                 </div>
               </div>
             </div>
 
             {/* Side-by-Side Day Comparison Bars */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between text-xs text-zinc-500 font-mono border-b border-zinc-100 dark:border-zinc-800 pb-3">
+            <div className="space-y-5 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-zinc-500 font-mono border-b border-zinc-100 dark:border-zinc-800 pb-2.5 sm:pb-3 gap-1">
                 <span>Daily New Reels Scraped per 24h</span>
-                <span>Values calibrated from Instagram Scraper engine</span>
+                <span className="text-[10px] sm:text-xs text-zinc-400">Calibrated from Instagram Scraper engine</span>
               </div>
 
               {FEATURED_SONGS.filter((s) => comparisonTrackIds.includes(s.id)).map((song) => (
                 <div key={song.id} className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2.5">
-                      <div className="relative w-7 h-7 rounded-lg overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700 shadow-xs">
+                  <div className="flex flex-wrap sm:flex-nowrap items-center justify-between text-xs gap-1">
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden shrink-0 border border-zinc-200 dark:border-zinc-700 shadow-xs">
                         <Image
                           src={song.coverImageUrl}
                           alt={song.title}
@@ -1402,16 +1775,16 @@ export default function LandingPage() {
                           className="object-cover"
                         />
                       </div>
-                      <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100">{song.title}</span>
-                      <span className="text-zinc-400 font-mono text-[11px]">({song.artist})</span>
+                      <span className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">{song.title}</span>
+                      <span className="text-zinc-400 font-mono text-[10px] sm:text-[11px]">({song.artist})</span>
                     </div>
-                    <span className="font-mono font-bold text-zinc-900 dark:text-zinc-100">
+                    <span className="font-mono font-bold text-[11px] sm:text-xs text-zinc-900 dark:text-zinc-100">
                       {song.velocity24h} &bull; Total: {song.totalReels}
                     </span>
                   </div>
 
                   {/* Day bars row */}
-                  <div className="grid grid-cols-7 gap-2">
+                  <div className="grid grid-cols-7 gap-1 sm:gap-2">
                     {song.dailyGraph.map((bar) => (
                       <div key={bar.day} className="flex flex-col items-center gap-1 group">
                         <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-sm h-14 flex items-end p-0.5">
@@ -1444,38 +1817,37 @@ export default function LandingPage() {
             ========================================================================= */}
         <section
           id="creators"
-          className="my-10 sm:my-14 p-6 sm:p-10 rounded-3xl bg-zinc-50/70 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 shadow-sm"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
+          className="my-8 sm:my-14 p-3 sm:p-10 rounded-2xl sm:rounded-3xl bg-zinc-50/70 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 shadow-sm w-full"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 sm:mb-8 gap-4">
             <div>
               <span className="text-xs font-mono font-bold uppercase tracking-wider text-violet-500 block mb-2">
                 Release Sound Champions
               </span>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12]">
+              <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12]">
                 The Creators Turning Audio into{" "}
                 <span className="bg-gradient-to-r from-violet-500 via-pink-500 to-amber-500 bg-clip-text text-transparent">
                   Viral Movements.
                 </span>
               </h2>
-              <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-2">
+              <p className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 mt-2">
                 Discover the exact choreographers and trendsetters driving 10M+ views on every release.
               </p>
             </div>
 
             {/* Song Switcher Tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
               {FEATURED_SONGS.map((song, idx) => (
                 <button
                   key={song.id}
                   type="button"
                   onClick={() => setSelectedSongIndex(idx)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-2 ${
-                    selectedSongIndex === idx
-                      ? "bg-amber-400 text-zinc-950 shadow-md shadow-amber-400/20"
-                      : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                  }`}
+                  className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 sm:gap-2 shrink-0 ${selectedSongIndex === idx
+                    ? "bg-amber-400 text-zinc-950 shadow-md shadow-amber-400/20"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                    }`}
                 >
                   <div className="relative w-4 h-4 rounded-full overflow-hidden shrink-0 border border-black/10">
                     <Image src={song.coverImageUrl} alt={song.title} fill className="object-cover" />
@@ -1487,7 +1859,7 @@ export default function LandingPage() {
           </div>
 
           {/* Active Song Hero Banner */}
-          <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/70 p-6 shadow-sm mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/70 p-3.5 sm:p-6 shadow-sm mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 w-full">
             <div className="flex items-center gap-4">
               <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-zinc-200 dark:border-zinc-700 shrink-0">
                 <Image
@@ -1531,86 +1903,39 @@ export default function LandingPage() {
             {activeSong.topCreators.map((creator) => (
               <div
                 key={creator.username}
-                className="group relative rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-5 shadow-xs hover:border-amber-400/50 hover:shadow-xl transition-all"
+                className="group relative rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-4 sm:p-5 shadow-xs hover:border-amber-400/50 hover:shadow-xl transition-all"
               >
-                {/* Rank Badge */}
-                <div className="absolute top-4 right-4 flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-500">
-                  <Award className="h-3 w-3" />
-                  #{creator.rank}
-                </div>
-
-                {/* Creator Avatar & Identity */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-700 group-hover:border-amber-400 transition-colors shrink-0">
-                    <Image
-                      src={creator.avatarUrl}
-                      alt={creator.username}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="overflow-hidden">
-                    <div className="flex items-center gap-1">
-                      <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate block">
-                        {creator.displayName}
-                      </span>
-                      {creator.isVerified && (
-                        <CheckCircle2 className="h-4 w-4 text-blue-500 fill-blue-500/20 shrink-0" />
-                      )}
+                {/* Creator Avatar, Identity, 1-Click DM & Rank in ONE line */}
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="relative w-11 h-11 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-700 group-hover:border-amber-400 transition-colors shrink-0">
+                      <Image
+                        src={creator.avatarUrl}
+                        alt={creator.username}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
-                    <span className="text-xs font-mono text-zinc-500 block truncate">
-                      @{creator.username}
-                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1">
+                        <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate block">
+                          {creator.displayName}
+                        </span>
+                        {creator.isVerified && (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-blue-500 fill-blue-500/20 shrink-0" />
+                        )}
+                      </div>
+                      <span className="text-[11px] font-mono text-zinc-500 block truncate">
+                        @{creator.username}
+                      </span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Impact Highlight Tag */}
-                <div className="rounded-lg bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 text-xs font-medium text-amber-600 dark:text-amber-400 mb-3 flex items-center gap-1.5">
-                  <Flame className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{creator.impactTag}</span>
-                </div>
-
-                {/* Creator Stats */}
-                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block font-mono">Video Reach</span>
-                    <span className="font-bold font-mono text-zinc-900 dark:text-zinc-100">
-                      {creator.videoPlays}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block font-mono">Likes</span>
-                    <span className="font-bold font-mono text-zinc-900 dark:text-zinc-100">
-                      {creator.likes}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block font-mono">Comments</span>
-                    <span className="font-bold font-mono text-zinc-700 dark:text-zinc-300">
-                      {creator.comments}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-zinc-400 block font-mono">Followers</span>
-                    <span className="font-bold font-mono text-zinc-700 dark:text-zinc-300">
-                      {creator.followers}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Footer Tag + 1-Click Direct DM Action */}
-                <div className="mt-3 pt-2 flex items-center justify-between text-xs text-zinc-400">
-                  <span className="truncate max-w-[100px]">{creator.niche}</span>
-                  <div className="flex items-center gap-1.5">
-                    <a
-                      href={`https://instagram.com/${creator.username}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1 rounded-md text-zinc-400 hover:text-zinc-100 transition-colors"
-                      title="View on Instagram"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-500">
+                      <Award className="h-3 w-3" />
+                      #{creator.rank}
+                    </div>
                     <a
                       href={`https://ig.me/m/${creator.username}`}
                       target="_blank"
@@ -1621,6 +1946,55 @@ export default function LandingPage() {
                       <span>1-Click DM</span>
                     </a>
                   </div>
+                </div>
+
+                {/* Impact Highlight Tag */}
+                <div className="rounded-lg bg-amber-400/10 border border-amber-400/20 px-2.5 py-1 text-xs font-medium text-amber-600 dark:text-amber-400 mb-3 flex items-center gap-1.5">
+                  <Flame className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">{creator.impactTag}</span>
+                </div>
+
+                {/* Creator Stats in ONE single line */}
+                <div className="grid grid-cols-4 gap-1.5 text-center pt-2.5 pb-1 border-t border-zinc-100 dark:border-zinc-800/80">
+                  <div className="p-1 rounded-lg bg-zinc-50 dark:bg-zinc-800/40">
+                    <span className="text-[9px] text-zinc-400 block font-mono uppercase truncate">Reach</span>
+                    <span className="font-bold font-mono text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
+                      {creator.videoPlays}
+                    </span>
+                  </div>
+                  <div className="p-1 rounded-lg bg-zinc-50 dark:bg-zinc-800/40">
+                    <span className="text-[9px] text-zinc-400 block font-mono uppercase truncate">Likes</span>
+                    <span className="font-bold font-mono text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
+                      {creator.likes}
+                    </span>
+                  </div>
+                  <div className="p-1 rounded-lg bg-zinc-50 dark:bg-zinc-800/40">
+                    <span className="text-[9px] text-zinc-400 block font-mono uppercase truncate">Comments</span>
+                    <span className="font-bold font-mono text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
+                      {creator.comments}
+                    </span>
+                  </div>
+                  <div className="p-1 rounded-lg bg-zinc-50 dark:bg-zinc-800/40">
+                    <span className="text-[9px] text-zinc-400 block font-mono uppercase truncate">Followers</span>
+                    <span className="font-bold font-mono text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
+                      {creator.followers}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer Tag + Instagram Link */}
+                <div className="mt-2.5 pt-2 flex items-center justify-between text-xs text-zinc-400 border-t border-zinc-100/60 dark:border-zinc-800/50">
+                  <span className="truncate">{creator.niche}</span>
+                  <a
+                    href={`https://instagram.com/${creator.username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-amber-500 transition-colors"
+                    title="View on Instagram"
+                  >
+                    <span>Instagram</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
                 </div>
               </div>
             ))}
@@ -1791,25 +2165,25 @@ export default function LandingPage() {
         {/* =========================================================================
             SECTION 4: AUTOMATED DAILY & WEEKLY REPORTS (WhatsApp VIP Bot + Excel Dumps)
             ========================================================================= */}
-        <section id="reports" className="my-10 sm:my-14 p-6 sm:p-10 rounded-3xl bg-emerald-500/[0.03] dark:bg-emerald-950/[0.12] border border-emerald-500/20 shadow-sm">
-          <div className="text-center max-w-3xl mx-auto mb-8">
+        <section id="reports" className="my-8 sm:my-14 p-3 sm:p-10 rounded-2xl sm:rounded-3xl bg-emerald-500/[0.03] dark:bg-emerald-950/[0.12] border border-emerald-500/20 shadow-sm w-full">
+          <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-8">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-500 block mb-2">
               Automated Data Delivery
             </span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12]">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12]">
               Morning WhatsApp Pings &amp;{" "}
               <span className="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-500 bg-clip-text text-transparent">
                 Excel Audits While You Sleep.
               </span>
             </h2>
-            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-2.5">
+            <p className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 mt-2 sm:mt-2.5">
               9:00 AM daily WhatsApp digests, instant VIP creator notifications, and boardroom Excel spreadsheets.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             {/* Card 1: WhatsApp VIP Bot & Morning Pulse (Telegram features unified here) */}
-            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-6 space-y-4 shadow-xl hover:border-emerald-500/50 transition-all flex flex-col justify-between group">
+            <div className="rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-3.5 sm:p-6 space-y-4 shadow-xl hover:border-emerald-500/50 transition-all flex flex-col justify-between group w-full">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
@@ -1869,7 +2243,7 @@ export default function LandingPage() {
             </div>
 
             {/* Card 2: Automated Daily & Weekly Excel Reports (.xlsx / CSV) */}
-            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-6 space-y-4 shadow-xl hover:border-emerald-600/50 transition-all flex flex-col justify-between group">
+            <div className="rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-3.5 sm:p-6 space-y-4 shadow-xl hover:border-emerald-600/50 transition-all flex flex-col justify-between group w-full">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="h-12 w-12 rounded-2xl bg-emerald-600/10 text-emerald-600 flex items-center justify-center font-bold">
@@ -1893,22 +2267,28 @@ export default function LandingPage() {
                   <div className="flex items-center justify-between pb-2 border-b border-zinc-200 dark:border-zinc-800">
                     <div className="flex items-center gap-2">
                       <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                      <span className="font-bold text-zinc-900 dark:text-zinc-100">weekly_velocity_audit.xlsx</span>
+                      <span className="font-bold text-zinc-900 dark:text-zinc-100">august_catalog_reels_audit.xlsx</span>
                     </div>
                     <span className="text-[10px] text-zinc-400">1.8 MB</span>
                   </div>
 
-                  <div className="space-y-1 text-[11px] pt-1">
-                    <div className="grid grid-cols-3 text-zinc-400 uppercase text-[9px] pb-1">
-                      <span>Handle</span>
-                      <span>Followers</span>
-                      <span className="text-right">Plays</span>
+                  <div className="space-y-1.5 text-[11px] pt-1">
+                    <div className="grid grid-cols-12 text-zinc-400 uppercase text-[9px] pb-1 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                      <span className="col-span-5">Track Name</span>
+                      <span className="col-span-3 text-center">Month</span>
+                      <span className="col-span-4 text-right">Reels Count</span>
                     </div>
-                    {activeSong.topCreators.slice(0, 3).map((c) => (
-                      <div key={c.username} className="grid grid-cols-3 py-0.5 text-zinc-700 dark:text-zinc-300">
-                        <span className="truncate font-semibold">@{c.username}</span>
-                        <span>{c.followers}</span>
-                        <span className="text-right font-bold text-amber-500">{c.videoPlays}</span>
+                    {FEATURED_SONGS.map((song) => (
+                      <div key={song.id} className="grid grid-cols-12 py-1 items-center text-zinc-700 dark:text-zinc-300">
+                        <span className="col-span-5 truncate font-semibold text-zinc-900 dark:text-zinc-100">
+                          {song.title}
+                        </span>
+                        <span className="col-span-3 text-center text-zinc-500 font-medium">
+                          August
+                        </span>
+                        <span className="col-span-4 text-right font-bold text-emerald-500 font-mono">
+                          {song.totalReels} reels
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -1924,7 +2304,7 @@ export default function LandingPage() {
             </div>
 
             {/* Card 3: Slack & Team Webhook Integrations */}
-            <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-6 space-y-4 shadow-xl hover:border-violet-500/50 transition-all flex flex-col justify-between group">
+            <div className="rounded-xl sm:rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/80 p-3.5 sm:p-6 space-y-4 shadow-xl hover:border-violet-500/50 transition-all flex flex-col justify-between group w-full">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="h-12 w-12 rounded-2xl bg-violet-500/10 text-violet-500 flex items-center justify-center font-bold">
@@ -2014,15 +2394,14 @@ export default function LandingPage() {
                     >
                       <td className="py-4 pl-6 pr-2 font-mono font-bold">
                         <span
-                          className={`inline-flex items-center justify-center h-7 w-7 rounded-full text-xs font-bold ${
-                            creator.rank === 1
-                              ? "bg-amber-400 text-zinc-950 shadow-sm"
-                              : creator.rank === 2
+                          className={`inline-flex items-center justify-center h-7 w-7 rounded-full text-xs font-bold ${creator.rank === 1
+                            ? "bg-amber-400 text-zinc-950 shadow-sm"
+                            : creator.rank === 2
                               ? "bg-zinc-300 dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100"
                               : creator.rank === 3
-                              ? "bg-amber-700/30 text-amber-500"
-                              : "text-zinc-400"
-                          }`}
+                                ? "bg-amber-700/30 text-amber-500"
+                                : "text-zinc-400"
+                            }`}
                         >
                           {creator.rank}
                         </span>
@@ -2119,90 +2498,90 @@ export default function LandingPage() {
             1. Daily Virality Telemetry Engine (24h Clock Scheduler)
             2. Multi-Tenant Team Delegation Graph (Admin -> Multiple Managers -> 1-Day Sponsor Pass)
             ========================================================================= */}
-        <section id="features" className="my-14 sm:my-20 p-6 sm:p-10 rounded-3xl bg-zinc-50/80 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 shadow-sm space-y-12">
+        <section id="features" className="my-10 sm:my-20 p-1.5 sm:p-10 rounded-2xl sm:rounded-3xl bg-zinc-50/80 dark:bg-zinc-900/40 border border-zinc-200/80 dark:border-zinc-800 shadow-sm space-y-8 sm:space-y-12 w-full">
           <div className="text-center max-w-3xl mx-auto">
             <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-500 block mb-2">
               System Architecture &amp; Workflow
             </span>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12]">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-zinc-950 dark:text-zinc-50 leading-[1.12]">
               24-Hour Autonomous Telemetry.{" "}
               <span className="bg-gradient-to-r from-amber-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
                 Multi-Tenant Team Graph.
               </span>
             </h2>
-            <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 mt-2.5">
+            <p className="text-xs sm:text-base text-zinc-600 dark:text-zinc-400 mt-2 sm:mt-2.5">
               Automated scraping schedules paired with granular role delegation for label heads, multiple artist managers, and 1-day guest sponsors.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-8 items-stretch">
             {/* WORKFLOW PILLAR 1: DAILY VIRALITY TELEMETRY ENGINE WITH CLOCK SIGN */}
-            <div className="lg:col-span-5 rounded-3xl border border-amber-500/30 bg-white dark:bg-zinc-900/90 p-6 sm:p-7 shadow-xl flex flex-col justify-between relative overflow-hidden">
+            <div className="lg:col-span-5 rounded-2xl sm:rounded-3xl border border-amber-500/30 bg-white dark:bg-zinc-900/90 p-3 sm:p-7 shadow-xl flex flex-col justify-between relative overflow-hidden w-full">
               <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="space-y-6">
+              <div className="space-y-5 sm:space-y-6">
                 {/* Cadence Header with Live Clock Indicator */}
-                <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3 sm:pb-4 gap-2">
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20 shadow-xs">
-                      <Clock className="h-6 w-6 animate-pulse" />
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl sm:rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20 shadow-xs shrink-0">
+                      <Clock className="h-5 w-5 sm:h-6 sm:w-6 animate-pulse" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <h3 className="font-bold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                         Daily Virality Telemetry
                         <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
                       </h3>
-                      <p className="text-xs text-zinc-500 font-mono">24h Automated Scraping Cycle</p>
+                      <p className="text-[11px] sm:text-xs text-zinc-500 font-mono">24h Automated Scraping Cycle</p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 text-[11px] font-mono font-bold text-amber-500 flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" />
+                  <span className="rounded-full bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 text-[10px] sm:text-[11px] font-mono font-bold text-amber-500 flex items-center gap-1 self-start sm:self-auto">
+                    <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                     Daily 12:00 AM IST
                   </span>
                 </div>
 
                 {/* 3-Step Automated Telemetry Workflow */}
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {/* Step 1 */}
-                  <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/70 dark:border-zinc-700/60">
-                    <div className="h-8 w-8 rounded-xl bg-amber-500 text-zinc-950 flex items-center justify-center font-bold text-xs shrink-0 font-mono shadow-xs">
+                  <div className="flex items-start gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/70 dark:border-zinc-700/60">
+                    <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl bg-amber-500 text-zinc-950 flex items-center justify-center font-bold text-[11px] sm:text-xs shrink-0 font-mono shadow-xs">
                       00:00
                     </div>
                     <div className="min-w-0">
                       <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
                         Instagram Node Ingestion
                       </h4>
-                      <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
+                      <p className="text-[11px] sm:text-xs text-zinc-500 mt-0.5 leading-relaxed">
                         Crawlers index active audio IDs across Indian server clusters, parsing net new reel uploads &amp; audio tags.
                       </p>
                     </div>
                   </div>
 
                   {/* Step 2 */}
-                  <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/70 dark:border-zinc-700/60">
-                    <div className="h-8 w-8 rounded-xl bg-violet-500 text-white flex items-center justify-center font-bold text-xs shrink-0 font-mono shadow-xs">
+                  <div className="flex items-start gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/70 dark:border-zinc-700/60">
+                    <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl bg-violet-500 text-white flex items-center justify-center font-bold text-[11px] sm:text-xs shrink-0 font-mono shadow-xs">
                       06:00
                     </div>
                     <div className="min-w-0">
                       <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
                         Virality Delta Recalibration
                       </h4>
-                      <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
+                      <p className="text-[11px] sm:text-xs text-zinc-500 mt-0.5 leading-relaxed">
                         Calculates daily growth curves, tags verified influencers, and flags hook-step breakouts.
                       </p>
                     </div>
                   </div>
 
                   {/* Step 3 */}
-                  <div className="flex items-start gap-3.5 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/70 dark:border-zinc-700/60">
-                    <div className="h-8 w-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0 font-mono shadow-xs">
+                  <div className="flex items-start gap-3 p-3 sm:p-3.5 rounded-xl sm:rounded-2xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/70 dark:border-zinc-700/60">
+                    <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg sm:rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] sm:text-xs shrink-0 font-mono shadow-xs">
                       09:00
                     </div>
                     <div className="min-w-0">
                       <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
                         WhatsApp &amp; Excel Broadcast
                       </h4>
-                      <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
+                      <p className="text-[11px] sm:text-xs text-zinc-500 mt-0.5 leading-relaxed">
                         Instant executive morning digest dispatched to artist WhatsApp groups &amp; boardroom Excel sheets exported.
                       </p>
                     </div>
@@ -2211,7 +2590,7 @@ export default function LandingPage() {
               </div>
 
               {/* Real-time Schedule Status Badge */}
-              <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-xs font-mono">
+              <div className="mt-5 sm:mt-6 pt-3 sm:pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px] sm:text-xs font-mono">
                 <span className="text-zinc-500 flex items-center gap-1.5">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                   Worker Status: Healthy
@@ -2221,7 +2600,7 @@ export default function LandingPage() {
             </div>
 
             {/* WORKFLOW PILLAR 2: MULTI-TENANT TEAM DELEGATION GRAPH */}
-            <div className="lg:col-span-7 rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 p-6 sm:p-7 shadow-xl flex flex-col justify-between relative overflow-hidden">
+            <div className="lg:col-span-7 rounded-2xl sm:rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 p-3 sm:p-7 shadow-xl flex flex-col justify-between relative overflow-hidden w-full">
               <div className="space-y-5">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-4">
                   <div>
@@ -2268,7 +2647,7 @@ export default function LandingPage() {
                   </div>
 
                   {/* LEVEL 2: MULTIPLE ARTIST MANAGERS (PARALLEL CLUSTER) */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-3 sm:pl-6 border-l-2 border-amber-400/50">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-2 sm:pl-6 border-l-2 border-amber-400/50">
                     {/* Manager 1 */}
                     <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 space-y-2">
                       <div className="flex items-center justify-between">
