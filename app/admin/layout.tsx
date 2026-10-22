@@ -14,6 +14,8 @@ import {
   RotateCw,
   LogOut,
   Sparkles,
+  Activity,
+  AlertTriangle,
 } from "lucide-react";
 import { api, User } from "@/lib/api";
 import { UniversalLoader } from "@/components/ui/LoadingSpinner";
@@ -95,6 +97,18 @@ export default function AdminLayout({
       label: "Support Tickets",
       href: "/admin/tickets",
       icon: ShieldAlert,
+      exact: false,
+    },
+    {
+      label: "Scan Job Runs",
+      href: "/admin/scans",
+      icon: Activity,
+      exact: false,
+    },
+    {
+      label: "Scraper Failure Logs",
+      href: "/admin/logs",
+      icon: AlertTriangle,
       exact: false,
     },
   ];

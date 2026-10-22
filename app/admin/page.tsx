@@ -33,12 +33,13 @@ export default function AdminControlPage() {
   const [tenants, setTenants] = useState<any[]>([]);
   const [plans, setPlans] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
+  const [jobRuns, setJobRuns] = useState<any[]>([]);
   const [coupons, setCoupons] = useState<any[]>([]);
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Tabs: "tenants" | "plans" | "coupons" | "invoices" | "rhythmsync" | "logs"
-  const [activeTab, setActiveTab] = useState<"tenants" | "plans" | "coupons" | "invoices" | "rhythmsync" | "logs">("tenants");
+  // Tabs: "tenants" | "plans" | "coupons" | "invoices" | "rhythmsync" | "scans" | "logs"
+  const [activeTab, setActiveTab] = useState<"tenants" | "plans" | "coupons" | "invoices" | "rhythmsync" | "scans" | "logs">("tenants");
   const [search, setSearch] = useState("");
 
   // Drawer / Override state
@@ -68,13 +69,14 @@ export default function AdminControlPage() {
       }
       setCurrentUser(user);
 
-      const [over, ten, pl, lg, cp, inv] = await Promise.all([
+      const [over, ten, pl, lg, cp, inv, jr] = await Promise.all([
         api.getAdminOverview().catch(() => null),
         api.getAdminTenants().catch(() => []),
         api.getAdminPlans().catch(() => []),
         api.getAdminLogs().catch(() => []),
         api.getAdminCoupons().catch(() => []),
         api.getAdminInvoices().catch(() => []),
+        api.getAdminJobRuns().catch(() => []),
       ]);
 
       setOverview(over);
@@ -83,6 +85,7 @@ export default function AdminControlPage() {
       setLogs(lg || []);
       setCoupons(cp || []);
       setInvoices(inv || []);
+      setJobRuns(jr || []);
     } finally {
       setLoading(false);
     }
@@ -284,6 +287,16 @@ export default function AdminControlPage() {
           }`}
         >
           Subscription Tiers ({plans.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("scans")}
+          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors ${
+            activeTab === "scans"
+              ? "bg-amber-400 text-zinc-950 shadow-xs"
+              : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+          }`}
+        >
+          Scan Job Runs ({jobRuns.length})
         </button>
         <button
           onClick={() => setActiveTab("logs")}
@@ -612,6 +625,96 @@ export default function AdminControlPage() {
               </ul>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Tab 5.5: Scan Job Runs (Stoki Architecture) */}
+      {activeTab === "scans" && (
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0e] shadow-2xs overflow-hidden">
+          <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">Scan Job Runs ({jobRuns.length})</h3>
+              <p className="text-xs text-zinc-500">Live batch scraping execution history from scan_job_runs</p>
+            </div>
+            <Link
+              href="/admin/scans"
+              className="text-xs font-semibold text-amber-500 hover:text-amber-400 flex items-center gap-1"
+            >
+              Open Full Scans Console &rarr;
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-zinc-50 dark:bg-zinc-900/60 text-zinc-500 border-b border-zinc-200 dark:border-zinc-800">
+                <tr>
+                  <th className="py-3 px-4 font-medium">Started At</th>
+                  <th className="py-3 px-4 font-medium">Audio Title & ID</th>
+                  <th className="py-3 px-4 font-medium">Workspace</th>
+                  <th className="py-3 px-4 font-medium">Status</th>
+                  <th className="py-3 px-4 font-medium">Reels Scraped</th>
+                  <th className="py-3 px-4 font-medium">Duration</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                {jobRuns.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-zinc-500">
+                      No scan job runs recorded yet.
+                    </td>
+                  </tr>
+                ) : (
+                  jobRuns.map((r) => {
+                    const isRunning = r.status === "running" || r.status === "pending";
+                    const isCompleted = r.status === "completed";
+                    return (
+                      <tr key={r.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/30">
+                        <td className="py-3 px-4 font-mono text-zinc-400 whitespace-nowrap">
+                          {r.started_at ? new Date(r.started_at).toLocaleString() : "-"}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="font-semibold text-zinc-900 dark:text-zinc-100 block truncate max-w-xs">
+                            {r.audio_title || "Direct Audio"}
+                          </span>
+                          <span className="font-mono text-[11px] text-zinc-500">ID: {r.instagram_audio_id || "N/A"}</span>
+                        </td>
+                        <td className="py-3 px-4 text-zinc-600 dark:text-zinc-300">
+                          {r.tenant_name || "Workspace"}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                              isRunning
+                                ? "bg-amber-400/10 text-amber-500 border border-amber-400/20"
+                                : isCompleted
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                            }`}
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                isRunning ? "bg-amber-400 animate-ping" : isCompleted ? "bg-emerald-400" : "bg-rose-400"
+                              }`}
+                            />
+                            {r.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                          {r.total_reels_scraped || 0}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-zinc-500">
+                          {r.completed_at && r.started_at
+                            ? `${Math.max(0, Math.round((new Date(r.completed_at).getTime() - new Date(r.started_at).getTime()) / 1000))}s`
+                            : isRunning
+                            ? "Active..."
+                            : "-"}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
   trackScanNow: (id: string) => `${API_BASE_URL}/api/v1/tracks/${id}/scan-now`,
   trackToggle: (id: string) => `${API_BASE_URL}/api/v1/tracks/${id}/toggle`,
   trackDelete: (id: string) => `${API_BASE_URL}/api/v1/tracks/${id}`,
+  trackJobRuns: (trackId?: string) => `${API_BASE_URL}/api/v1/tracks/job-runs${trackId ? `?track_id=${encodeURIComponent(trackId)}` : ""}`,
 
   // Reels Discovery & Analytics
   reels: `${API_BASE_URL}/api/v1/reels`,
@@ -76,6 +77,8 @@ export const API_ENDPOINTS = {
   adminFaqs: `${API_BASE_URL}/api/v1/admin/faqs`,
   adminInquiries: `${API_BASE_URL}/api/v1/admin/inquiries`,
   adminTickets: `${API_BASE_URL}/api/v1/admin/tickets`,
+  adminJobRuns: `${API_BASE_URL}/api/v1/admin/job-runs`,
+  adminFailureLogs: `${API_BASE_URL}/api/v1/admin/failure-logs`,
 } as const;
 
 export const ENDPOINTS = API_ENDPOINTS;
@@ -136,6 +139,8 @@ export interface ReelItem {
   reel_id?: string;
   reel_code: string;
   shortcode?: string;
+  title?: string;
+  caption?: string;
   creator_username: string;
   creator_name?: string;
   creator_profile_pic_url?: string;
@@ -367,6 +372,9 @@ export const api = {
       method: "PATCH",
     });
   },
+  getTrackJobRuns: async (trackId?: string): Promise<any[]> => {
+    return apiFetch<any[]>(API_ENDPOINTS.trackJobRuns(trackId));
+  },
 
   // Reels & Analytics
   getReels: async (params?: {
@@ -389,10 +397,33 @@ export const api = {
     const qs = query.toString();
     return apiFetch<any>(`${API_ENDPOINTS.reels}${qs ? `?${qs}` : ""}`);
   },
-  getTopCreators: async (trackId?: string, limit?: number): Promise<{ creators: any[]; total: number }> => {
+  getTopCreators: async (
+    params?:
+      | {
+          track_id?: string;
+          trackId?: string;
+          page?: number;
+          pageSize?: number;
+          page_size?: number;
+          search?: string;
+          limit?: number;
+        }
+      | string,
+    legacyLimit?: number
+  ): Promise<{ creators: any[]; total: number; page?: number; page_size?: number; total_pages?: number }> => {
     const query = new URLSearchParams();
-    if (trackId) query.set("track_id", trackId);
-    if (limit) query.set("limit", String(limit));
+    if (typeof params === "string") {
+      if (params) query.set("track_id", params);
+      if (legacyLimit) query.set("limit", String(legacyLimit));
+    } else if (params) {
+      const tId = params.track_id || params.trackId;
+      if (tId) query.set("track_id", tId);
+      if (params.page) query.set("page", String(params.page));
+      const size = params.pageSize || params.page_size;
+      if (size) query.set("page_size", String(size));
+      if (params.limit) query.set("limit", String(params.limit));
+      if (params.search) query.set("search", params.search);
+    }
     const qs = query.toString();
     return apiFetch<any>(`${API_ENDPOINTS.topCreators}${qs ? `?${qs}` : ""}`);
   },
@@ -539,6 +570,15 @@ export const api = {
   },
   getAdminLogs: async () => {
     return apiFetch<any[]>(API_ENDPOINTS.adminLogs);
+  },
+  getAdminJobRuns: async (status?: string) => {
+    const url = status && status !== "all"
+      ? `${API_ENDPOINTS.adminJobRuns}?status=${encodeURIComponent(status)}`
+      : API_ENDPOINTS.adminJobRuns;
+    return apiFetch<any[]>(url);
+  },
+  getAdminFailureLogs: async () => {
+    return apiFetch<any[]>(API_ENDPOINTS.adminFailureLogs);
   },
   getAdminInvoices: async () => {
     return apiFetch<any[]>(API_ENDPOINTS.adminInvoices);
