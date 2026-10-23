@@ -61,19 +61,40 @@ export default function TopCreatorsPage() {
   const [selectedTrackId, setSelectedTrackId] = useState<string>("");
   const [creators, setCreators] = useState<CreatorItem[]>([]);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(24);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [outreachStatus, setOutreachStatus] = useState<Record<string, string>>({});
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   async function loadData() {
     try {
       setLoading(true);
       const [tracksRes, creatorsRes] = await Promise.all([
         api.getTracks().catch(() => []),
-        api.getTopCreators(selectedTrackId || undefined, 30).catch(() => ({ creators: [], total: 0 })),
+        api.getTopCreators({
+          trackId: selectedTrackId || undefined,
+          page,
+          pageSize,
+          search: debouncedSearch.trim() || undefined,
+        }).catch(() => ({ creators: [], total: 0, page: 1, total_pages: 1 })),
       ]);
 
       setTracks(tracksRes || []);
       setCreators(creatorsRes?.creators || []);
+      setTotalCount(creatorsRes?.total ?? 0);
+      setTotalPages(creatorsRes?.total_pages ?? 1);
     } finally {
       setLoading(false);
     }
@@ -81,17 +102,9 @@ export default function TopCreatorsPage() {
 
   useEffect(() => {
     loadData();
-  }, [selectedTrackId]);
+  }, [selectedTrackId, page, pageSize, debouncedSearch]);
 
-  const filteredCreators = useMemo(() => {
-    if (!search.trim()) return creators;
-    const term = search.toLowerCase();
-    return creators.filter(
-      (c) =>
-        c.creator_username.toLowerCase().includes(term) ||
-        (c.creator_name || "").toLowerCase().includes(term)
-    );
-  }, [creators, search]);
+  const filteredCreators = creators;
 
   const handleToggleOutreach = (username: string) => {
     setOutreachStatus((prev) => {
@@ -142,7 +155,10 @@ export default function TopCreatorsPage() {
       {/* 1. Horizontal Song Switcher (Overall vs Per Track) */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         <button
-          onClick={() => setSelectedTrackId("")}
+          onClick={() => {
+            setSelectedTrackId("");
+            setPage(1);
+          }}
           className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-all cursor-pointer border ${
             !selectedTrackId
               ? "bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-300 shadow-xs"
@@ -154,7 +170,7 @@ export default function TopCreatorsPage() {
           </div>
           <span>Overall Top Influencers</span>
           <span className="px-1.5 py-0.2 rounded-md bg-zinc-200/60 dark:bg-zinc-800 text-[10px] font-mono">
-            {creators.length}
+            {totalCount}
           </span>
         </button>
 
@@ -163,7 +179,10 @@ export default function TopCreatorsPage() {
           return (
             <button
               key={track.id}
-              onClick={() => setSelectedTrackId(track.id)}
+              onClick={() => {
+                setSelectedTrackId(track.id);
+                setPage(1);
+              }}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-all cursor-pointer border ${
                 isSelected
                   ? "bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-300 shadow-xs"
@@ -332,6 +351,58 @@ export default function TopCreatorsPage() {
           <p className="text-xs text-zinc-500 max-w-md mx-auto font-mono">
             Once scraper workers discover reels using your audio stems, creator handles and viewership analytics will populate this radar automatically.
           </p>
+        </div>
+      )}
+
+      {/* Interactive Pagination Controls */}
+      {totalCount > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#121215] shadow-xs font-mono text-xs sm:text-sm">
+          <div className="text-zinc-500 font-semibold">
+            Showing <span className="text-zinc-900 dark:text-zinc-100 font-bold">{(page - 1) * pageSize + 1}</span> to{" "}
+            <span className="text-zinc-900 dark:text-zinc-100 font-bold">{Math.min(page * pageSize, totalCount)}</span> of{" "}
+            <span className="text-amber-500 font-black">{totalCount}</span> creators
+          </div>
+
+          <div className="flex items-center gap-2 self-center sm:self-auto">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="px-3.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              &larr; Prev
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pNum = i + 1;
+                if (totalPages > 5 && page > 3) {
+                  pNum = page - 2 + i;
+                  if (pNum > totalPages) pNum = totalPages - 4 + i;
+                }
+                return (
+                  <button
+                    key={pNum}
+                    onClick={() => setPage(pNum)}
+                    className={`w-8 h-8 rounded-xl font-bold flex items-center justify-center transition-colors cursor-pointer ${
+                      page === pNum
+                        ? "bg-amber-500 text-black font-black shadow-xs"
+                        : "border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    {pNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="px-3.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              Next &rarr;
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -25,6 +25,7 @@ import {
   SlidersHorizontal,
   Flame,
   FileSpreadsheet,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { api, ReelItem, TrackedSong, getProxiedImageUrl } from "@/lib/api";
@@ -56,10 +57,12 @@ export default function ReelsExplorerPage() {
   const [searchCreator, setSearchCreator] = useState("");
   const [minPlays, setMinPlays] = useState<number>(0);
   const [sortBy, setSortBy] = useState("play_count");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
   const [loading, setLoading] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(24);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Selected reel for the interactive inspection window
   const [activeReel, setActiveReel] = useState<ReelItem | null>(null);
@@ -68,22 +71,22 @@ export default function ReelsExplorerPage() {
   async function loadData() {
     try {
       setLoading(true);
-      const [reelsRes, tracksRes] = await Promise.all([
+      const [tracksRes, reelsRes] = await Promise.all([
+        api.getTracks().catch(() => []),
         api.getReels({
           track_id: selectedTrackId || undefined,
           page,
-          page_size: 24,
+          page_size: pageSize,
           min_plays: minPlays || undefined,
           search: searchCreator || undefined,
           sort_by: sortBy,
-        }).catch(() => ({ items: [], total: 0 })),
-        api.getTracks().catch(() => []),
+        }).catch(() => ({ items: [], total: 0, page: 1, total_pages: 1 })),
       ]);
 
-      const items = reelsRes?.items || [];
-      setReels(items);
-      setTotalCount(reelsRes?.total || items.length);
       setTracks(tracksRes || []);
+      setReels(reelsRes?.items || []);
+      setTotalCount(reelsRes?.total ?? 0);
+      setTotalPages(reelsRes?.total_pages ?? 1);
     } finally {
       setLoading(false);
     }
@@ -91,7 +94,7 @@ export default function ReelsExplorerPage() {
 
   useEffect(() => {
     loadData();
-  }, [selectedTrackId, minPlays, sortBy, page]);
+  }, [selectedTrackId, page, pageSize, minPlays, sortBy]);
 
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -104,7 +107,7 @@ export default function ReelsExplorerPage() {
   }, [tracks, selectedTrackId]);
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 max-w-[1440px] w-full mx-auto">
+    <div className="p-2 sm:p-2 space-y-3 ">
       {/* Compact Header */}
       <PageHeader
         title="Instagram Reels Explorer"
@@ -116,22 +119,20 @@ export default function ReelsExplorerPage() {
             <div className="flex items-center rounded-lg border border-zinc-200 dark:border-zinc-800 p-0.5 bg-zinc-100 dark:bg-zinc-900">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === "grid"
-                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-xs"
-                    : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
-                }`}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === "grid"
+                  ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+                  }`}
                 title="Grid View"
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setViewMode("table")}
-                className={`p-1.5 rounded-md transition-colors ${
-                  viewMode === "table"
-                    ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-xs"
-                    : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
-                }`}
+                className={`p-1.5 rounded-md transition-colors ${viewMode === "table"
+                  ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                  : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+                  }`}
                 title="Table View"
               >
                 <List className="w-3.5 h-3.5" />
@@ -150,7 +151,7 @@ export default function ReelsExplorerPage() {
             </Link>
 
             <button
-              onClick={() => loadData()}
+              onClick={loadData}
               disabled={loading}
               className="flex items-center gap-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-mono font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shadow-xs cursor-pointer"
             >
@@ -174,11 +175,10 @@ export default function ReelsExplorerPage() {
               setSelectedTrackId("");
               setPage(1);
             }}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium shrink-0 transition-all cursor-pointer border ${
-              !selectedTrackId
-                ? "bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-300 shadow-xs"
-                : "bg-white dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium shrink-0 transition-all cursor-pointer border ${!selectedTrackId
+              ? "bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-300 shadow-xs"
+              : "bg-white dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
+              }`}
           >
             <div className="w-5 h-5 rounded-md bg-amber-500/20 flex items-center justify-center shrink-0">
               <Music2 className="w-3 h-3 text-amber-600 dark:text-amber-400" />
@@ -199,11 +199,10 @@ export default function ReelsExplorerPage() {
                   setSelectedTrackId(track.id);
                   setPage(1);
                 }}
-                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-all cursor-pointer border ${
-                  isSelected
-                    ? "bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-300 shadow-xs"
-                    : "bg-white dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
-                }`}
+                className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-medium shrink-0 transition-all cursor-pointer border ${isSelected
+                  ? "bg-amber-500/15 border-amber-500/40 text-amber-900 dark:text-amber-300 shadow-xs"
+                  : "bg-white dark:bg-zinc-900/60 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700"
+                  }`}
               >
                 {track.cover_artwork_url ? (
                   <img
@@ -286,6 +285,58 @@ export default function ReelsExplorerPage() {
           </div>
         </div>
       </div>
+
+      {/* Top Pagination Bar */}
+      {totalCount > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#121215] shadow-xs font-mono text-xs sm:text-sm">
+          <div className="text-zinc-500 font-semibold">
+            Showing <span className="text-zinc-900 dark:text-zinc-100 font-bold">{(page - 1) * pageSize + 1}</span> to{" "}
+            <span className="text-zinc-900 dark:text-zinc-100 font-bold">{Math.min(page * pageSize, totalCount)}</span> of{" "}
+            <span className="text-amber-500 font-black">{totalCount}</span> reels
+          </div>
+
+          <div className="flex items-center gap-2 self-center sm:self-auto">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              &larr; Prev
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pNum = i + 1;
+                if (totalPages > 5 && page > 3) {
+                  pNum = page - 2 + i;
+                  if (pNum > totalPages) pNum = totalPages - 4 + i;
+                }
+                return (
+                  <button
+                    key={`top-${pNum}`}
+                    onClick={() => setPage(pNum)}
+                    className={`w-8 h-8 rounded-xl font-bold flex items-center justify-center transition-colors cursor-pointer ${
+                      page === pNum
+                        ? "bg-amber-500 text-black font-black shadow-xs"
+                        : "border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    {pNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              Next &rarr;
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 3. Grid View: Vertical Reel Cards */}
       {viewMode === "grid" ? (
@@ -396,26 +447,92 @@ export default function ReelsExplorerPage() {
           </div>
         )
       ) : (
-        /* Table View with Large High-Contrast Typography */
-        <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-[#121215] overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-zinc-50 dark:bg-zinc-900/80 text-zinc-600 dark:text-zinc-300 border-b border-zinc-200 dark:border-zinc-800 font-mono text-xs sm:text-sm font-bold uppercase tracking-wider">
+        /* Table View with Compact & Responsive Layout */
+        <div className="border border-zinc-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-[#121215] overflow-hidden shadow-xs">
+          {loading && (
+            <div className="h-0.5 w-full bg-amber-500/20 overflow-hidden">
+              <div className="h-full bg-amber-500 animate-pulse w-full" />
+            </div>
+          )}
+          {/* Mobile Card List (Visible on mobile only < md) */}
+          <div className="md:hidden divide-y divide-zinc-100 dark:divide-zinc-800/80">
+            {reels.map((reel, idx) => {
+              const fallbackThumb = REEL_THUMBNAILS[idx % REEL_THUMBNAILS.length];
+              const thumbUrl = getProxiedImageUrl(reel.thumbnail_url) || fallbackThumb;
+              const eng = reel.play_count > 0 ? (((reel.like_count + reel.comment_count) / reel.play_count) * 100).toFixed(1) : "0.0";
+              const reelName = reel.title || reel.tracked_audio_title || "Instagram Reel";
+
+              return (
+                <div
+                  key={reel.id || idx}
+                  onClick={() => setActiveReel(reel)}
+                  className="p-3.5 flex items-center justify-between gap-3 active:bg-zinc-100/70 dark:active:bg-zinc-900/70 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="relative w-12 h-16 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-zinc-200 dark:border-zinc-800 shadow-xs">
+                      <img
+                        src={thumbUrl}
+                        alt={reel.creator_username}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = fallbackThumb;
+                        }}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
+                        <Play className="w-3.5 h-3.5 text-white fill-white" />
+                      </div>
+                    </div>
+
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="text-xs font-bold text-zinc-950 dark:text-zinc-50 truncate">
+                        {reelName}
+                      </p>
+                      <div className="flex items-center gap-1 text-[11px] text-zinc-400">
+                        <span className="truncate font-semibold text-zinc-700 dark:text-zinc-300">@{reel.creator_username}</span>
+                        {reel.creator_is_verified && (
+                          <CheckCircle2 className="w-3 h-3 text-sky-400 fill-sky-400/20 shrink-0" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-500 pt-0.5">
+                        <span className="text-amber-500 font-bold">{formatNumber(reel.play_count)} plays</span>
+                        <span>•</span>
+                        <span>{formatNumber(reel.like_count)} likes</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 font-mono text-[10px] font-bold">
+                      {eng}%
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-zinc-400" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop Table View (md: and up - untouched) */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left table-auto">
+              <thead className="bg-zinc-50 dark:bg-zinc-900/80 text-zinc-600 dark:text-zinc-300 border-b border-zinc-200 dark:border-zinc-800 font-mono text-[11px] font-bold uppercase tracking-wider">
                 <tr>
-                  <th className="px-5 py-4 font-bold">Reel / Creator</th>
-                  <th className="px-5 py-4 font-bold">Audio Stem</th>
-                  <th className="px-5 py-4 font-bold">Plays</th>
-                  <th className="px-5 py-4 font-bold">Likes</th>
-                  <th className="px-5 py-4 font-bold">Comments</th>
-                  <th className="px-5 py-4 font-bold">Engagement</th>
-                  <th className="px-5 py-4 font-bold text-right">Action</th>
+                  <th className="px-3.5 py-2.5 font-bold max-w-[200px]">Reel</th>
+                  <th className="px-3 py-2.5 font-bold max-w-[130px]">Audio</th>
+                  <th className="px-3 py-2.5 font-bold whitespace-nowrap">Plays</th>
+                  <th className="px-3 py-2.5 font-bold whitespace-nowrap">Likes</th>
+                  <th className="px-3 py-2.5 font-bold whitespace-nowrap">Eng.</th>
+                  <th className="px-3 py-2.5 font-bold whitespace-nowrap">Date</th>
+                  <th className="px-3 py-2.5 font-bold text-right whitespace-nowrap"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
+              <tbody className={`divide-y divide-zinc-100 dark:divide-zinc-800/60 transition-opacity duration-150 ${loading ? "opacity-40" : "opacity-100"}`}>
                 {reels.map((reel, idx) => {
-                  const fallbackAvatar = CREATOR_AVATARS[idx % CREATOR_AVATARS.length];
-                  const avatarUrl = getProxiedImageUrl(reel.creator_profile_pic_url) || fallbackAvatar;
+                  const fallbackThumb = REEL_THUMBNAILS[idx % REEL_THUMBNAILS.length];
+                  const thumbUrl = getProxiedImageUrl(reel.thumbnail_url) || fallbackThumb;
                   const eng = reel.play_count > 0 ? (((reel.like_count + reel.comment_count) / reel.play_count) * 100).toFixed(1) : "0.0";
+                  const reelName = reel.title || reel.tracked_audio_title || "Instagram Reel";
 
                   return (
                     <tr
@@ -423,54 +540,85 @@ export default function ReelsExplorerPage() {
                       onClick={() => setActiveReel(reel)}
                       className="hover:bg-zinc-50/80 dark:hover:bg-zinc-900/50 transition-colors cursor-pointer"
                     >
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={avatarUrl}
-                            alt={reel.creator_username}
-                            referrerPolicy="no-referrer"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = fallbackAvatar;
-                            }}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-zinc-300 dark:border-zinc-700 shrink-0 shadow-xs"
-                          />
-                          <div>
-                            <div className="flex items-center gap-1.5 font-bold text-sm sm:text-base text-zinc-950 dark:text-zinc-50">
-                              @{reel.creator_username}
+                      {/* 1. Reel Name with Creator handle underneath - constrained width */}
+                      <td className="px-3.5 py-2 max-w-[200px]">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="relative w-8 h-11 rounded-md overflow-hidden bg-zinc-900 shrink-0 border border-zinc-200 dark:border-zinc-800">
+                            <img
+                              src={thumbUrl}
+                              alt={reel.creator_username}
+                              referrerPolicy="no-referrer"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = fallbackThumb;
+                              }}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                              <Play className="w-3 h-3 text-white fill-white" />
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <p
+                              className="text-xs font-bold text-zinc-950 dark:text-zinc-50 truncate leading-snug block w-full"
+                              title={reelName}
+                            >
+                              {reelName}
+                            </p>
+                            <div className="flex items-center gap-1 text-[11px] text-zinc-400 font-medium truncate pt-0.5">
+                              <span className="truncate">@{reel.creator_username}</span>
                               {reel.creator_is_verified && (
-                                <CheckCircle2 className="w-4 h-4 text-sky-400 fill-sky-400/20" />
+                                <CheckCircle2 className="w-3 h-3 text-sky-400 fill-sky-400/20 shrink-0" />
                               )}
                             </div>
-                            <span className="text-xs font-mono font-semibold text-zinc-400">
-                              {reel.shortcode || reel.reel_code}
-                            </span>
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-sm sm:text-base text-zinc-800 dark:text-zinc-200 font-bold">
-                        {reel.tracked_audio_title || "Audio Track"}
+
+                      {/* 2. Audio Stem */}
+                      <td className="px-3 py-2 text-xs text-zinc-700 dark:text-zinc-300 font-medium max-w-[130px]">
+                        <div className="flex items-center gap-1.5 truncate">
+                          <Music2 className="w-3 h-3 text-amber-500 shrink-0" />
+                          <span className="truncate block" title={reel.tracked_audio_title || "Audio Track"}>
+                            {reel.tracked_audio_title || "Audio Track"}
+                          </span>
+                        </div>
                       </td>
-                      <td className="px-5 py-4 font-mono font-black text-base sm:text-lg text-zinc-950 dark:text-zinc-50">
+
+                      {/* 3. Plays */}
+                      <td className="px-3 py-2 font-mono font-bold text-xs text-zinc-950 dark:text-zinc-50 whitespace-nowrap">
                         {formatNumber(reel.play_count)}
                       </td>
-                      <td className="px-5 py-4 font-mono font-bold text-sm sm:text-base text-zinc-700 dark:text-zinc-300">
+
+                      {/* 4. Likes */}
+                      <td className="px-3 py-2 font-mono text-xs text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
                         {formatNumber(reel.like_count)}
                       </td>
-                      <td className="px-5 py-4 font-mono font-bold text-sm sm:text-base text-zinc-700 dark:text-zinc-300">
-                        {formatNumber(reel.comment_count)}
-                      </td>
-                      <td className="px-5 py-4 font-mono font-black text-sm sm:text-base text-amber-500">
+
+                      {/* 5. Engagement */}
+                      <td className="px-3 py-2 font-mono font-bold text-xs text-amber-500 whitespace-nowrap">
                         {eng}%
                       </td>
-                      <td className="px-5 py-4 text-right">
+
+                      {/* 6. Date Posted */}
+                      <td className="px-3 py-2 font-mono text-xs text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+                        {reel.posted_at
+                          ? new Date(reel.posted_at).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "Recent"}
+                      </td>
+
+                      {/* 7. Action */}
+                      <td className="px-3 py-2 text-right whitespace-nowrap">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setActiveReel(reel);
                           }}
-                          className="px-3.5 py-2 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-black text-xs sm:text-sm font-mono font-bold transition-all shadow-xs cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-black text-[11px] font-mono font-bold transition-all cursor-pointer"
                         >
-                          Play Reel &rarr;
+                          Play &rarr;
                         </button>
                       </td>
                     </tr>
@@ -478,6 +626,58 @@ export default function ReelsExplorerPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Pagination Controls (Bottom) */}
+      {totalCount > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#121215] shadow-xs font-mono text-xs sm:text-sm mb-24 relative z-20">
+          <div className="text-zinc-500 font-semibold">
+            Showing <span className="text-zinc-900 dark:text-zinc-100 font-bold">{(page - 1) * pageSize + 1}</span> to{" "}
+            <span className="text-zinc-900 dark:text-zinc-100 font-bold">{Math.min(page * pageSize, totalCount)}</span> of{" "}
+            <span className="text-amber-500 font-black">{totalCount}</span> reels
+          </div>
+
+          <div className="flex items-center gap-2 self-center sm:self-auto">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className="px-3.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              &larr; Prev
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pNum = i + 1;
+                if (totalPages > 5 && page > 3) {
+                  pNum = page - 2 + i;
+                  if (pNum > totalPages) pNum = totalPages - 4 + i;
+                }
+                return (
+                  <button
+                    key={pNum}
+                    onClick={() => setPage(pNum)}
+                    className={`w-8 h-8 rounded-xl font-bold flex items-center justify-center transition-colors cursor-pointer ${
+                      page === pNum
+                        ? "bg-amber-500 text-black font-black shadow-xs"
+                        : "border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    {pNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="px-3.5 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+            >
+              Next &rarr;
+            </button>
           </div>
         </div>
       )}
@@ -501,22 +701,20 @@ export default function ReelsExplorerPage() {
                 <button
                   type="button"
                   onClick={() => setPlayerMode("direct")}
-                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                    playerMode === "direct"
-                      ? "bg-amber-500 text-zinc-950 font-bold"
-                      : "text-zinc-400 hover:text-white"
-                  }`}
+                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${playerMode === "direct"
+                    ? "bg-amber-500 text-zinc-950 font-bold"
+                    : "text-zinc-400 hover:text-white"
+                    }`}
                 >
                   Direct Video Player
                 </button>
                 <button
                   type="button"
                   onClick={() => setPlayerMode("embed")}
-                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                    playerMode === "embed"
-                      ? "bg-amber-500 text-zinc-950 font-bold"
-                      : "text-zinc-400 hover:text-white"
-                  }`}
+                  className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${playerMode === "embed"
+                    ? "bg-amber-500 text-zinc-950 font-bold"
+                    : "text-zinc-400 hover:text-white"
+                    }`}
                 >
                   Instagram Embed
                 </button>
@@ -594,6 +792,17 @@ export default function ReelsExplorerPage() {
                     <span>Profile</span>
                     <ExternalLink className="w-3 h-3" />
                   </a>
+                </div>
+
+                {/* Reel Title Banner */}
+                <div className="p-3.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/60 space-y-1">
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    <Sparkles className="w-3 h-3" />
+                    <span>Reel Title</span>
+                  </div>
+                  <h3 className="text-sm sm:text-base font-bold text-zinc-950 dark:text-zinc-50 leading-snug break-words">
+                    {activeReel.title || activeReel.caption || activeReel.tracked_audio_title || "Instagram Reel"}
+                  </h3>
                 </div>
 
                 {/* Key Metrics Grid */}

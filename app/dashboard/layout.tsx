@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/Sidebar";
+import { MobileTopBar } from "@/components/dashboard/MobileTopBar";
+import { MobileBottomNav } from "@/components/dashboard/MobileBottomNav";
 import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
 import { api, User } from "@/lib/api";
 import { UniversalLoader } from "@/components/ui/LoadingSpinner";
@@ -16,6 +18,7 @@ export default function DashboardLayout({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
@@ -35,13 +38,12 @@ export default function DashboardLayout({
         }
       }
 
-      // 2. Fetch fresh user context from FastAPI backend (via cookie or header)
+      // 2. Fetch fresh user context from FastAPI backend
       try {
         const fresh = await api.getMe();
         if (isCancelled) return;
 
         if (!fresh) {
-          // If neither stored user nor fresh user exists, clear and redirect to login
           if (!stored) {
             localStorage.clear();
             document.cookie = "rp_session=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -94,12 +96,31 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#fdfdfd] dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 font-sans">
-      <Sidebar user={user} />
+      {/* Sidebar: Desktop persistent + Mobile off-canvas drawer */}
+      <Sidebar
+        user={user}
+        mobileOpen={isMobileDrawerOpen}
+        onCloseMobile={() => setIsMobileDrawerOpen(false)}
+      />
+
       <div className="flex flex-1 flex-col overflow-y-auto min-w-0">
-        <main className="flex-1 p-3 sm:p-5 w-full min-w-0">
+        {/* Mobile App Header (Top of screen on mobile) */}
+        <MobileTopBar
+          user={user}
+          onOpenMenu={() => setIsMobileDrawerOpen(true)}
+        />
+
+        {/* Main Content Area */}
+        <main className="flex-1 px-1.5 sm:px-3 py-2 sm:py-3 pb-24 md:p-5 lg:p-6 w-full min-w-0">
           {children}
         </main>
       </div>
+
+      {/* Native-grade Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        onOpenMenu={() => setIsMobileDrawerOpen(true)}
+        isMenuOpen={isMobileDrawerOpen}
+      />
 
       {/* Workspace Setup Wizard Modal */}
       <OnboardingModal

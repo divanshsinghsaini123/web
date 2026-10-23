@@ -80,11 +80,10 @@ export default function BillingPage() {
   }, []);
 
   const handleDownloadReceipt = (invNumber: string) => {
-    setDownloading(true);
-    setTimeout(() => {
-      setDownloading(false);
-      alert(`Receipt for ${invNumber} downloaded successfully.`);
-    }, 1000);
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") || "" : "";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    const invoiceUrl = `${apiUrl}/billing/invoices/${encodeURIComponent(invNumber)}/html?token=${encodeURIComponent(token)}`;
+    window.open(invoiceUrl, "_blank");
   };
 
   const handleUpgrade = async (p: SubscriptionPlan) => {

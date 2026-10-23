@@ -26,6 +26,8 @@ import {
   ChevronRight,
   ShieldCheck,
   Flame,
+  Power,
+  Bell,
 } from "lucide-react";
 import { api, TrackedSong } from "@/lib/api";
 import PageHeader from "@/components/dashboard/PageHeader";
@@ -120,7 +122,23 @@ export default function AlertsAndAutomationPage() {
   const [tracks, setTracks] = useState<TrackedSong[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notice, setNotice] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    id: number;
+    title: string;
+    description?: string;
+    type: "active" | "inactive" | "delete" | "info";
+  } | null>(null);
+
+  const showToast = useCallback(
+    (title: string, description?: string, type: "active" | "inactive" | "delete" | "info" = "info") => {
+      const id = Date.now();
+      setToast({ id, title, description, type });
+      setTimeout(() => {
+        setToast((curr) => (curr?.id === id ? null : curr));
+      }, 2800);
+    },
+    []
+  );
 
   // Stoki-styled Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -192,21 +210,32 @@ export default function AlertsAndAutomationPage() {
   }, [fetchBackendData]);
 
   const handleToggleActive = async (ruleId: string) => {
+    const target = rules.find((r) => r.id === ruleId);
+    const willBeActive = target ? !target.is_active : true;
+
     setRules((prev) =>
       prev.map((r) => (r.id === ruleId ? { ...r, is_active: !r.is_active } : r))
     );
+
+    showToast(
+      willBeActive ? "Rule Armed & Active" : "Rule Paused / Disarmed",
+      target?.name,
+      willBeActive ? "active" : "inactive"
+    );
+
     try {
       if (!ruleId.startsWith("default-")) {
         await api.toggleAlertRule(ruleId);
       }
-      setNotice("Rule status updated.");
-      setTimeout(() => setNotice(null), 2500);
     } catch {
       // Keep optimistic update
     }
   };
 
   const handleToggleChannel = (ruleId: string, channel: "whatsapp" | "email") => {
+    const target = rules.find((r) => r.id === ruleId);
+    const willBeEnabled = target ? !target.channels[channel] : true;
+
     setRules((prev) =>
       prev.map((r) => {
         if (r.id !== ruleId) return r;
@@ -219,12 +248,19 @@ export default function AlertsAndAutomationPage() {
         };
       })
     );
-    setNotice(`${channel === "whatsapp" ? "WhatsApp" : "Email"} dispatch updated.`);
-    setTimeout(() => setNotice(null), 2500);
+
+    showToast(
+      `${channel === "whatsapp" ? "WhatsApp" : "Email"} ${willBeEnabled ? "Enabled" : "Disabled"}`,
+      target?.name,
+      willBeEnabled ? "active" : "inactive"
+    );
   };
 
   const handleDeleteRule = async (ruleId: string) => {
+    const target = rules.find((r) => r.id === ruleId);
     setRules((prev) => prev.filter((r) => r.id !== ruleId));
+    showToast("Rule Removed", target?.name, "delete");
+
     if (!ruleId.startsWith("default-")) {
       try {
         await api.deleteAlertRule(ruleId);
@@ -232,8 +268,6 @@ export default function AlertsAndAutomationPage() {
         // Ignored
       }
     }
-    setNotice("Alert rule removed.");
-    setTimeout(() => setNotice(null), 2500);
   };
 
   const handleCreateRuleSubmit = async (e: React.FormEvent) => {
@@ -290,8 +324,7 @@ export default function AlertsAndAutomationPage() {
       setRules((prev) => [newRule, ...prev]);
       setIsModalOpen(false);
       setRuleName("");
-      setNotice("New rule armed and active!");
-      setTimeout(() => setNotice(null), 3000);
+      showToast("New Rule Armed & Active", newRule.name, "active");
     } finally {
       setIsSubmitting(false);
     }
@@ -344,14 +377,6 @@ export default function AlertsAndAutomationPage() {
           </button>
         </div>
       </div>
-
-      {/* Notice Banner */}
-      {notice && (
-        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-mono animate-fade-in">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>{notice}</span>
-        </div>
-      )}
 
       {/* Wide Apple-Grade Segmented Control Switch */}
       <div className="w-full max-w-2xl mx-auto p-1.5 rounded-2xl bg-zinc-100 dark:bg-zinc-900/90 border border-zinc-200 dark:border-zinc-800 grid grid-cols-2 gap-2 shadow-inner">
@@ -861,6 +886,53 @@ export default function AlertsAndAutomationPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Floating Dynamic Status Toast (Zero Layout Shift) */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-6 right-6 z-50 pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl bg-zinc-950/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-zinc-800 text-white shadow-2xl shadow-black/70 ring-1 ring-white/10 transition-all duration-200"
+        >
+          <div
+            className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+              toast.type === "active"
+                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 ring-2 ring-emerald-500/10"
+                : toast.type === "inactive"
+                ? "bg-zinc-800 text-zinc-400 border border-zinc-700"
+                : toast.type === "delete"
+                ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+            }`}
+          >
+            {toast.type === "active" ? (
+              <CheckCircle2 className="w-4 h-4" />
+            ) : toast.type === "inactive" ? (
+              <Power className="w-4 h-4" />
+            ) : toast.type === "delete" ? (
+              <Trash2 className="w-4 h-4" />
+            ) : (
+              <Bell className="w-4 h-4" />
+            )}
+          </div>
+          <div className="flex flex-col pr-2">
+            <span className="text-xs font-semibold text-zinc-100 font-sans tracking-tight">
+              {toast.title}
+            </span>
+            {toast.description && (
+              <span className="text-[11px] text-zinc-400 font-mono line-clamp-1 max-w-[240px]">
+                {toast.description}
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => setToast(null)}
+            className="text-zinc-500 hover:text-zinc-300 p-1 rounded-md transition-colors cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
     </div>

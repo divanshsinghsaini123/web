@@ -50,6 +50,8 @@ export default function ReportsPage() {
   const [tracks, setTracks] = useState<TrackedSong[]>([]);
   const [selectedTracks, setSelectedTracks] = useState<string[]>([]);
   const [reportType, setReportType] = useState<"MASTER_DATE_RANGE" | "SPECIFIC_SCAN">("MASTER_DATE_RANGE");
+  const [scanRuns, setScanRuns] = useState<any[]>([]);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [dateRangePreset, setDateRangePreset] = useState<"24h" | "7d" | "30d" | "90d" | "1y" | "all">("7d");
   const [fromDate, setFromDate] = useState(() => {
     const d = new Date();
@@ -67,9 +69,10 @@ export default function ReportsPage() {
   async function loadData() {
     try {
       setIsLoading(true);
-      const [tracksRes, repRes] = await Promise.all([
+      const [tracksRes, repRes, runsRes] = await Promise.all([
         api.getTracks().catch(() => []),
         api.getReports().catch(() => ({ reports: [] })),
+        api.getTrackJobRuns().catch(() => []),
       ]);
       const loadedTracks = tracksRes || [];
       setTracks(loadedTracks);
@@ -80,6 +83,11 @@ export default function ReportsPage() {
         setSelectedTracks(loadedTracks.map((t) => t.id));
       }
       setReportHistory(repRes?.reports || []);
+      const loadedRuns = runsRes || [];
+      setScanRuns(loadedRuns);
+      if (loadedRuns.length > 0) {
+        setSelectedRunId(loadedRuns[0].id);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -272,65 +280,152 @@ export default function ReportsPage() {
                 </div>
               </div>
 
-              {/* Date Range Selector */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-semibold text-zinc-500">
-                    Select Date Range
-                  </span>
-                  <div className="flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-zinc-800 p-0.5 bg-zinc-50 dark:bg-zinc-900 text-xs font-mono flex-wrap">
-                    {(
-                      [
-                        { id: "24h", label: "24h" },
-                        { id: "7d", label: "7D" },
-                        { id: "30d", label: "30D" },
-                        { id: "90d", label: "90D" },
-                        { id: "1y", label: "1Y" },
-                        { id: "all", label: "ALL" },
-                      ] as const
-                    ).map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => handleDatePreset(p.id)}
-                        className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
-                          dateRangePreset === p.id
-                            ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold"
-                            : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                  <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-1">
-                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider block font-semibold">
-                      FROM DATE
+              {/* Conditional: Master Date Range vs Specific Scan Runs Selector */}
+              {reportType === "MASTER_DATE_RANGE" ? (
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-semibold text-zinc-500">
+                      Select Date Range
                     </span>
-                    <input
-                      type="date"
-                      value={fromDate}
-                      onChange={(e) => setFromDate(e.target.value)}
-                      className="w-full bg-transparent text-zinc-900 dark:text-zinc-100 focus:outline-none font-bold"
-                    />
+                    <div className="flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-zinc-800 p-0.5 bg-zinc-50 dark:bg-zinc-900 text-xs font-mono flex-wrap">
+                      {(
+                        [
+                          { id: "24h", label: "24h" },
+                          { id: "7d", label: "7D" },
+                          { id: "30d", label: "30D" },
+                          { id: "90d", label: "90D" },
+                          { id: "1y", label: "1Y" },
+                          { id: "all", label: "ALL" },
+                        ] as const
+                      ).map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => handleDatePreset(p.id)}
+                          className={`px-2.5 py-1 rounded-md transition-colors cursor-pointer ${
+                            dateRangePreset === p.id
+                              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold"
+                              : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                          }`}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-1">
-                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider block font-semibold">
-                      TO DATE
-                    </span>
-                    <input
-                      type="date"
-                      value={toDate}
-                      onChange={(e) => setToDate(e.target.value)}
-                      className="w-full bg-transparent text-zinc-900 dark:text-zinc-100 focus:outline-none font-bold"
-                    />
+                  <div className="grid grid-cols-2 gap-3 text-xs font-mono">
+                    <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-1">
+                      <span className="text-[10px] text-zinc-400 uppercase tracking-wider block font-semibold">
+                        FROM DATE
+                      </span>
+                      <input
+                        type="date"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                        className="w-full bg-transparent text-zinc-900 dark:text-zinc-100 focus:outline-none font-bold"
+                      />
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-1">
+                      <span className="text-[10px] text-zinc-400 uppercase tracking-wider block font-semibold">
+                        TO DATE
+                      </span>
+                      <input
+                        type="date"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                        className="w-full bg-transparent text-zinc-900 dark:text-zinc-100 focus:outline-none font-bold"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                /* Specific Scan Instance Selector */
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-semibold text-zinc-500">
+                      Select Scan Instance ({scanRuns.length} Available)
+                    </span>
+                    <span className="text-[10px] font-mono text-zinc-400">
+                      Showing latest recorded runs
+                    </span>
+                  </div>
+
+                  {scanRuns.length > 0 ? (
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                      {scanRuns.map((run) => {
+                        const isSelected = selectedRunId === run.id;
+                        return (
+                          <div
+                            key={run.id}
+                            onClick={() => setSelectedRunId(run.id)}
+                            className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-xs font-mono ${
+                              isSelected
+                                ? "border-emerald-500/50 bg-emerald-500/10 ring-1 ring-emerald-500/40"
+                                : "border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 hover:border-zinc-300 dark:hover:border-zinc-700"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                                  isSelected ? "border-emerald-500" : "border-zinc-400"
+                                }`}
+                              >
+                                {isSelected && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
+                              </div>
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                                    {run.track_title || "Audio Track"}
+                                  </span>
+                                  {run.artist_name && (
+                                    <span className="text-[10px] text-zinc-400 font-sans">
+                                      by {run.artist_name}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-zinc-400">
+                                  {run.started_at
+                                    ? new Date(run.started_at).toLocaleString()
+                                    : "Recent Run"}{" "}
+                                  • Run ID: {run.id.slice(0, 8)}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                                  run.status === "completed"
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                    : run.status === "failed"
+                                    ? "bg-rose-500/15 text-rose-500"
+                                    : "bg-amber-500/15 text-amber-500"
+                                }`}
+                              >
+                                {run.status}
+                              </span>
+                              <span className="text-[11px] font-bold text-zinc-700 dark:text-zinc-300">
+                                {run.total_reels_scraped ?? 0} reels
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/20 text-center space-y-1.5">
+                      <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                        No scan run snapshots recorded yet
+                      </p>
+                      <p className="text-[11px] text-zinc-400 max-w-sm mx-auto">
+                        Trigger an on-demand scan or wait for the cron cycle in Tracks &amp; Schedules to create point-in-time run snapshots.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* 2. Tracked Songs (Platforms Tile Equivalent in Stoki) */}

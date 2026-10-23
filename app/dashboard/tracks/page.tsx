@@ -28,6 +28,7 @@ import {
 import { api, TrackedSong, User, getProxiedImageUrl } from "@/lib/api";
 import { extractAudioId, cn } from "@/lib/utils";
 import PageHeader from "@/components/dashboard/PageHeader";
+import { useToast } from "@/components/ui/DynamicIslandToast";
 
 const ALARM_SLOTS = [
   {
@@ -88,14 +89,19 @@ interface TrackScheduleState {
 
 export default function UnifiedTracksSchedulesPage() {
   const router = useRouter();
+  const { showToast } = useToast();
+  const setNotice = (msg: string | null) => {
+    if (msg) showToast(msg, "success");
+  };
+  const setErrorNotice = (msg: string | null) => {
+    if (msg) showToast(msg, "error");
+  };
   const [tracks, setTracks] = useState<TrackedSong[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [syncingTrackId, setSyncingTrackId] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const [errorNotice, setErrorNotice] = useState<string | null>(null);
 
   // Alarm toggles state per track
   const [schedules, setSchedules] = useState<TrackScheduleState>({});
@@ -492,20 +498,6 @@ export default function UnifiedTracksSchedulesPage() {
           }
         />
 
-        {/* Notices */}
-        {notice && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
-            <span>{notice}</span>
-          </div>
-        )}
-
-        {errorNotice && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-mono">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-            <span>{errorNotice}</span>
-          </div>
-        )}
 
         {/* COMPACT SLEEK HORIZONTAL TELEMETRY STRIP (Saves vertical space) */}
         <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl bg-white dark:bg-[#121215] px-4 py-3 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
