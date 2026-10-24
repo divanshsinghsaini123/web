@@ -290,11 +290,17 @@ export default function DashboardOverviewPage() {
 
   return (
     <div className="pt-0 px-1 sm:px-2 pb-8 space-y-5 w-full">
-      {/* 1. Header: Minimal "Overview" with Zero Fluff Subtitle */}
+      {/* 1. Header: Dashboard with High-End Icon */}
       <PageHeader
-        title="Overview"
-        icon={<Activity className="w-5 h-5 text-zinc-950" />}
-        iconVariant="amber"
+        title="Dashboard"
+        icon={
+          <div className="w-6 h-6 flex items-center justify-center">
+            <svg className="w-5 h-5 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12h2l3-6 4 12 3-8 3 5 3-3" />
+            </svg>
+          </div>
+        }
+        iconVariant="zinc"
         className="pb-3 border-b border-zinc-200/80 dark:border-zinc-800/80"
         actions={
           <div className="flex items-center gap-2.5">
@@ -325,191 +331,167 @@ export default function DashboardOverviewPage() {
         </div>
       )}
 
-      {/* 2. 5 Rectangular Quick Links Telemetry Strip (Screenshot 4 Reference) */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
-        {/* Card 1: Sync Health */}
-        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-b from-emerald-500/10 via-zinc-50/50 to-white dark:from-emerald-950/25 dark:via-zinc-900/40 dark:to-[#121215] p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3">
+      {/* 2. 5 Horizontal Landscape Quick Link Telemetry Cards (Width > Height) */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {/* Card 1: SCAN ALL NOW (Distinct Action Highlight) */}
+        <div
+          onClick={handleScanAllNow}
+          className="rounded-2xl border-2 border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-white dark:from-amber-500/20 dark:via-zinc-900/60 dark:to-zinc-900/40 p-3 shadow-xs hover:shadow-md hover:border-amber-500/80 transition-all flex flex-col justify-between cursor-pointer group select-none min-h-[88px]"
+        >
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4" />
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-amber-500 text-zinc-950 flex items-center justify-center font-bold shadow-xs">
+                <Zap className={`w-3.5 h-3.5 ${isScanningAll ? "animate-spin" : ""}`} />
+              </div>
+              <span className="text-[11px] font-mono font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                SCAN ALL NOW
+              </span>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-zinc-400" />
+            <ArrowUpRight className="w-4 h-4 text-amber-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </div>
-          <div>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-500 block">
-              CATALOG SYNC HEALTH
-            </span>
-            <div className="text-2xl sm:text-3xl font-mono font-black text-zinc-950 dark:text-zinc-50">
-              100%
+          <div className="pt-2 flex items-end justify-between">
+            <div>
+              <div className="text-xl font-mono font-black text-zinc-950 dark:text-zinc-50 leading-none">
+                {isScanningAll ? "Scanning..." : `${tracks.length} Stems`}
+              </div>
+              <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 block pt-0.5">
+                Last scan: Just now
+              </span>
             </div>
-            <span className="text-[11px] font-mono text-zinc-400">
-              Last scan: Just now
+            <span className="text-[11px] font-mono font-bold text-amber-600 dark:text-amber-400 group-hover:underline">
+              Run Now &rarr;
             </span>
-          </div>
-          <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[11px] font-mono">
-            <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Healthy
-            </span>
-            <button onClick={handleScanAllNow} className="text-zinc-500 hover:text-emerald-500 font-bold cursor-pointer">
-              Sync All &rarr;
-            </button>
           </div>
         </div>
 
-        {/* Card 2: Active Threshold Alerts */}
+        {/* Card 2: ALERTS & AUTOMATION */}
         <Link
           href="/dashboard/alerts"
-          className="rounded-2xl border border-rose-500/20 bg-gradient-to-b from-rose-500/10 via-zinc-50/50 to-white dark:from-rose-950/25 dark:via-zinc-900/40 dark:to-[#121215] p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 group"
+          className="rounded-2xl border border-rose-500/30 bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-white dark:from-rose-950/25 dark:via-zinc-900/50 dark:to-zinc-900/30 p-3 shadow-xs hover:shadow-md hover:border-rose-500/60 transition-all flex flex-col justify-between group min-h-[88px]"
         >
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-full bg-rose-500/15 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-              <AlertTriangle className="w-4 h-4" />
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-rose-600 text-white flex items-center justify-center font-bold shadow-xs">
+                <AlertTriangle className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-[11px] font-mono font-black uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                ALERTS &amp; RULES
+              </span>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-zinc-400 group-hover:text-rose-500 transition-colors" />
+            <ArrowUpRight className="w-4 h-4 text-rose-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </div>
-          <div>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-500 block">
-              ACTIVE THRESHOLD ALERTS
-            </span>
-            <div className="text-2xl sm:text-3xl font-mono font-black text-rose-600 dark:text-rose-400">
-              5 Armed
+          <div className="pt-2 flex items-end justify-between">
+            <div>
+              <div className="text-xl font-mono font-black text-rose-600 dark:text-rose-400 leading-none">
+                5 Armed
+              </div>
+              <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 block pt-0.5">
+                WhatsApp &amp; Email
+              </span>
             </div>
-            <span className="text-[11px] font-mono text-zinc-400">
-              WhatsApp &amp; Email active
-            </span>
-          </div>
-          <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[11px] font-mono">
-            <span className="inline-flex items-center gap-1 text-rose-500 font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" /> Armed
-            </span>
-            <span className="text-zinc-500 group-hover:text-rose-500 font-bold">
+            <span className="text-[11px] font-mono font-bold text-rose-500 group-hover:underline">
               Manage &rarr;
             </span>
           </div>
         </Link>
 
-        {/* Card 3: Tracked Songs */}
+        {/* Card 3: TRACK AUDIO STEMS */}
         <Link
           href="/dashboard/tracks"
-          className="rounded-2xl border border-sky-500/20 bg-gradient-to-b from-sky-500/10 via-zinc-50/50 to-white dark:from-sky-950/25 dark:via-zinc-900/40 dark:to-[#121215] p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 group"
+          className="rounded-2xl border border-sky-500/30 bg-gradient-to-r from-sky-500/10 via-sky-500/5 to-white dark:from-sky-950/25 dark:via-zinc-900/50 dark:to-zinc-900/30 p-3 shadow-xs hover:shadow-md hover:border-sky-500/60 transition-all flex flex-col justify-between group min-h-[88px]"
         >
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-full bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center">
-              <Music2 className="w-4 h-4" />
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-sky-600 text-white flex items-center justify-center font-bold shadow-xs">
+                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              </div>
+              <span className="text-[11px] font-mono font-black uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                TRACK AUDIO
+              </span>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-zinc-400 group-hover:text-sky-500 transition-colors" />
+            <ArrowUpRight className="w-4 h-4 text-sky-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </div>
-          <div>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-500 block">
-              TRACKED AUDIO STEMS
-            </span>
-            <div className="text-2xl sm:text-3xl font-mono font-black text-zinc-950 dark:text-zinc-50">
-              {tracks.length} Songs
+          <div className="pt-2 flex items-end justify-between">
+            <div>
+              <div className="text-xl font-mono font-black text-zinc-950 dark:text-zinc-50 leading-none">
+                + Track Song
+              </div>
+              <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 block pt-0.5">
+                {tracks.length} active stem{tracks.length !== 1 ? "s" : ""}
+              </span>
             </div>
-            <span className="text-[11px] font-mono text-zinc-400">
-              {formatNumber(tracks.reduce((acc, t) => acc + (t.scraped_reels_count || t.total_reels_count || 0), 0))} reels indexed
-            </span>
-          </div>
-          <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[11px] font-mono">
-            <span className="inline-flex items-center gap-1 text-sky-600 dark:text-sky-400 font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-500" /> Active
-            </span>
-            <span className="text-zinc-500 group-hover:text-sky-500 font-bold">
+            <span className="text-[11px] font-mono font-bold text-sky-600 dark:text-sky-400 group-hover:underline">
               Catalog &rarr;
             </span>
           </div>
         </Link>
 
-        {/* Card 4: Scheduled Runs */}
+        {/* Card 4: SCHEDULED RUNS */}
         <Link
           href="/dashboard/alerts"
-          className="rounded-2xl border border-teal-500/20 bg-gradient-to-b from-teal-500/10 via-zinc-50/50 to-white dark:from-teal-950/25 dark:via-zinc-900/40 dark:to-[#121215] p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 group"
+          className="rounded-2xl border border-teal-500/30 bg-gradient-to-r from-teal-500/10 via-teal-500/5 to-white dark:from-teal-950/25 dark:via-zinc-900/50 dark:to-zinc-900/30 p-3 shadow-xs hover:shadow-md hover:border-teal-500/60 transition-all flex flex-col justify-between group min-h-[88px]"
         >
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-full bg-teal-500/15 text-teal-600 dark:text-teal-400 flex items-center justify-center">
-              <Clock className="w-4 h-4" />
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold shadow-xs">
+                <Clock className="w-3.5 h-3.5 stroke-[2.5]" />
+              </div>
+              <span className="text-[11px] font-mono font-black uppercase tracking-wider text-teal-600 dark:text-teal-400">
+                SCHEDULED RUNS
+              </span>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-zinc-400 group-hover:text-teal-500 transition-colors" />
+            <ArrowUpRight className="w-4 h-4 text-teal-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </div>
-          <div>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-500 block">
-              SCHEDULED RUNS
-            </span>
-            <div className="text-2xl sm:text-3xl font-mono font-black text-zinc-950 dark:text-zinc-50">
-              Every 4h
+          <div className="pt-2 flex items-end justify-between">
+            <div>
+              <div className="text-xl font-mono font-black text-zinc-950 dark:text-zinc-50 leading-none">
+                Every 4h
+              </div>
+              <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 block pt-0.5">
+                Auto pulse daemon
+              </span>
             </div>
-            <span className="text-[11px] font-mono text-zinc-400">
-              Scan digest daemon
-            </span>
-          </div>
-          <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[11px] font-mono">
-            <span className="inline-flex items-center gap-1 text-teal-600 dark:text-teal-400 font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-500" /> Running
-            </span>
-            <span className="text-zinc-500 group-hover:text-teal-500 font-bold">
-              View &rarr;
+            <span className="text-[11px] font-mono font-bold text-teal-600 dark:text-teal-400 group-hover:underline">
+              Cron &rarr;
             </span>
           </div>
         </Link>
 
-        {/* Card 5: Report Generation */}
+        {/* Card 5: EXCEL EXPORTS */}
         <Link
           href="/dashboard/reports"
-          className="rounded-2xl border border-amber-500/20 bg-gradient-to-b from-amber-500/10 via-zinc-50/50 to-white dark:from-amber-950/25 dark:via-zinc-900/40 dark:to-[#121215] p-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-3 group"
+          className="rounded-2xl border border-emerald-600/35 bg-gradient-to-r from-emerald-600/15 via-emerald-600/5 to-white dark:from-emerald-950/30 dark:via-zinc-900/50 dark:to-zinc-900/30 p-3 shadow-xs hover:shadow-md hover:border-emerald-600/60 transition-all flex flex-col justify-between group min-h-[88px]"
         >
           <div className="flex items-center justify-between">
-            <div className="w-8 h-8 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <FileSpreadsheet className="w-4 h-4" />
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-black text-[10px] shadow-xs tracking-tighter ring-1 ring-emerald-500">
+                XLS
+              </div>
+              <span className="text-[11px] font-mono font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                EXCEL REPORT
+              </span>
             </div>
-            <ArrowUpRight className="w-4 h-4 text-zinc-400 group-hover:text-amber-500 transition-colors" />
+            <ArrowUpRight className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </div>
-          <div>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-zinc-500 block">
-              REPORT EXPORTS
-            </span>
-            <div className="text-2xl sm:text-3xl font-mono font-black text-zinc-950 dark:text-zinc-50">
-              Excel &amp; CSV
+          <div className="pt-2 flex items-end justify-between">
+            <div>
+              <div className="text-xl font-mono font-black text-zinc-950 dark:text-zinc-50 leading-none">
+                1-Click Export
+              </div>
+              <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 block pt-0.5">
+                Excel &amp; CSV ready
+              </span>
             </div>
-            <span className="text-[11px] font-mono text-zinc-400">
-              1-Click instant digest
-            </span>
-          </div>
-          <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800 text-[11px] font-mono">
-            <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" /> Export
-            </span>
-            <span className="text-zinc-500 group-hover:text-amber-500 font-bold">
+            <span className="text-[11px] font-mono font-bold text-emerald-600 dark:text-emerald-400 group-hover:underline">
               Generate &rarr;
             </span>
           </div>
         </Link>
       </div>
 
-      {/* 3. Live Animated Border Button - Direct Trigger Above Song Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/95 dark:bg-[#111114]/95 shadow-sm">
-        <div className="flex items-center gap-3">
-          <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
-          <span className="text-xs sm:text-sm font-mono font-bold text-zinc-800 dark:text-zinc-200">
-            Real-Time Virality Radar • Monitoring {tracks.length} Stems across Instagram Reels
-          </span>
-        </div>
-
-        <button
-          onClick={handleScanAllNow}
-          disabled={isScanningAll}
-          className="relative p-[1.5px] rounded-xl overflow-hidden group shadow-md cursor-pointer shrink-0"
-        >
-          <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#f59e0b_0%,#10b981_50%,#ec4899_100%)]" />
-          <span className="relative inline-flex items-center gap-2 px-4 py-2 rounded-[10px] bg-zinc-950 text-white font-mono text-xs sm:text-sm font-bold transition-colors group-hover:bg-zinc-900">
-            <Zap className={`w-4 h-4 text-amber-400 ${isScanningAll ? "animate-spin" : "animate-bounce"}`} />
-            <span>{isScanningAll ? "Dispatching Global Scrapers..." : "Live Scan All Songs Now"}</span>
-          </span>
-        </button>
-      </div>
-
-      {/* 4. Monitored Release Spotlight Card */}
+      {/* 3. Monitored Release Spotlight Card with Sleek Ambient Gradient */}
       {tracks.length > 0 && currentTrack ? (
-        <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/95 dark:bg-[#111114]/95 p-4 sm:p-6 shadow-sm dark:shadow-[0_12px_36px_rgb(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-md space-y-5">
+        <div className="rounded-3xl border border-zinc-200/90 dark:border-zinc-800/90 bg-gradient-to-b from-white via-zinc-50/50 to-zinc-100/40 dark:from-[#141419] dark:via-[#111115] dark:to-[#0c0c0f] p-5 sm:p-7 shadow-xl shadow-zinc-200/50 dark:shadow-[0_16px_40px_rgba(0,0,0,0.6)] backdrop-blur-xl space-y-6 relative overflow-hidden">
           {/* Top Carousel Bar */}
           <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800/80">
             <div className="flex items-center gap-3">
@@ -583,83 +565,89 @@ export default function DashboardOverviewPage() {
           {/* Unified Row: 3 Metric Pills + Top Influencer Box on the Right */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-stretch">
             {/* 1. Reels Indexed (Compact) */}
-            <div className="lg:col-span-2 p-3.5 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 space-y-1 flex flex-col justify-between shadow-xs">
-              <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block font-bold">
+            <div className="lg:col-span-2 p-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.04] dark:bg-emerald-950/20 flex flex-col justify-between space-y-1 shadow-xs">
+              <span className="text-[11px] font-mono font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
                 REELS INDEXED
               </span>
-              <div className="text-2xl sm:text-3xl font-mono font-black text-zinc-900 dark:text-zinc-100">
-                {formatNumber(currentTrack.scraped_reels_count || currentTrack.total_reels_count || 12400)}
+              <div className="text-3xl font-mono font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
+                {formatNumber(currentTrack.scraped_reels_count || currentTrack.total_reels_count || 102)}
               </div>
-              <span className="text-xs text-emerald-500 font-mono font-bold block">
-                +{formatNumber(Math.round((currentTrack.scraped_reels_count || 1200) * 0.12))} today
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 font-mono font-bold block">
+                +{formatNumber(Math.round((currentTrack.scraped_reels_count || 102) * 0.12))} today
               </span>
             </div>
 
             {/* 2. Video Plays (Compact) */}
-            <div className="lg:col-span-2 p-3.5 rounded-2xl border border-sky-500/25 bg-sky-500/5 space-y-1 flex flex-col justify-between shadow-xs">
-              <span className="text-xs font-mono text-sky-600 dark:text-sky-400 uppercase tracking-wider block font-bold">
+            <div className="lg:col-span-2 p-4 rounded-2xl border border-sky-500/30 bg-sky-500/[0.04] dark:bg-sky-950/20 flex flex-col justify-between space-y-1 shadow-xs">
+              <span className="text-[11px] font-mono font-black text-sky-600 dark:text-sky-400 uppercase tracking-wider block">
                 VIDEO PLAYS
               </span>
-              <div className="text-2xl sm:text-3xl font-mono font-black text-zinc-900 dark:text-zinc-100">
+              <div className="text-3xl font-mono font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
                 {formatNumber(currentTrack.total_plays || 14800000)}
               </div>
-              <span className="text-xs text-zinc-400 font-mono font-semibold block">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400 font-mono font-semibold block">
                 Total reach
               </span>
             </div>
 
             {/* 3. Virality Index (Compact) */}
-            <div className="lg:col-span-2 p-3.5 rounded-2xl border border-amber-500/25 bg-amber-500/5 space-y-1 flex flex-col justify-between shadow-xs">
-              <span className="text-xs font-mono text-amber-600 dark:text-amber-400 uppercase tracking-wider block font-bold">
+            <div className="lg:col-span-2 p-4 rounded-2xl border border-amber-500/30 bg-amber-500/[0.04] dark:bg-amber-950/20 flex flex-col justify-between space-y-1 shadow-xs">
+              <span className="text-[11px] font-mono font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider block">
                 VIRALITY INDEX
               </span>
-              <div className="text-2xl sm:text-3xl font-mono font-black text-amber-500">
+              <div className="text-3xl font-mono font-black text-amber-500 tracking-tight">
                 {currentTrack.virality_score || 96}%
               </div>
-              <span className="text-xs text-amber-500 font-mono block font-bold">
+              <span className="text-xs text-amber-600 dark:text-amber-400 font-mono font-bold block">
                 Accelerating
               </span>
             </div>
 
-            {/* 4. Top Influencer Box on the Right Side (Wide) */}
-            <div className="lg:col-span-6 p-3.5 sm:p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-3 min-w-0">
-                <img
-                  src={getProxiedImageUrl(activeCreator?.creator_profile_pic_url) || DEFAULT_CREATOR_AVATAR}
-                  alt="Top Creator"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = DEFAULT_CREATOR_AVATAR;
-                  }}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-amber-500/50 shrink-0 shadow-xs"
-                />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-base font-bold text-zinc-900 dark:text-zinc-100 truncate">
-                      @{activeCreator?.creator_username || "ankit_baiyanpuria"}
+            {/* 4. Top Influencer Box on the Right Side (Roomy & Elevated) */}
+            <div className="lg:col-span-6 p-4 rounded-2xl border border-zinc-200/90 dark:border-zinc-800/90 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="relative shrink-0">
+                  <img
+                    src={getProxiedImageUrl(activeCreator?.creator_profile_pic_url) || DEFAULT_CREATOR_AVATAR}
+                    alt="Top Creator"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = DEFAULT_CREATOR_AVATAR;
+                    }}
+                    className="w-13 h-13 rounded-2xl object-cover border-2 border-amber-500/60 shadow-md"
+                  />
+                  <span className="absolute -bottom-1 -right-1 w-4.5 h-4.5 rounded-full bg-sky-500 text-white flex items-center justify-center ring-2 ring-white dark:ring-zinc-900 text-[10px] font-bold">
+                    ✓
+                  </span>
+                </div>
+                <div className="min-w-0 space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base sm:text-lg font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
+                      @{activeCreator?.creator_username || "himanshi._.khatri"}
                     </span>
-                    <CheckCircle2 className="w-4 h-4 text-sky-400 fill-sky-400/20 shrink-0" />
-                    <span className="text-xs font-mono text-zinc-400 font-semibold shrink-0">(7.9M reach)</span>
+                    <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-mono text-[11px] font-bold shrink-0">
+                      Top Creator
+                    </span>
                   </div>
-                  <p className="text-xs text-zinc-500 truncate font-sans">
-                    Top viral adoption reel with this stem
+                  <p className="text-xs font-mono text-zinc-500 dark:text-zinc-400">
+                    Highest viral adoption velocity with this audio stem
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-4 shrink-0 sm:self-center">
                 <div className="text-right font-mono">
-                  <div className="text-sm sm:text-base font-black text-amber-500">
-                    {formatNumber(activeCreator?.total_plays || 18200000)} plays
+                  <div className="text-lg sm:text-xl font-black text-amber-500">
+                    {formatNumber(activeCreator?.total_plays || 933400)} plays
                   </div>
                   <div className="text-xs text-zinc-400 font-bold">
-                    {formatNumber(activeCreator?.total_likes || 2200000)} likes
+                    {formatNumber(activeCreator?.total_likes || 66600)} likes
                   </div>
                 </div>
 
                 <button
-                  onClick={() => handleOpenDirectMessage(activeCreator?.creator_username || "ankit_baiyanpuria")}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 text-xs sm:text-sm font-bold hover:bg-zinc-800 dark:hover:bg-white transition-colors cursor-pointer shadow-md"
+                  onClick={() => handleOpenDirectMessage(activeCreator?.creator_username || "himanshi._.khatri")}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 text-xs sm:text-sm font-black hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all cursor-pointer shadow-md hover:scale-[1.02] active:scale-95"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>1-Click DM</span>
@@ -668,17 +656,17 @@ export default function DashboardOverviewPage() {
             </div>
           </div>
 
-          {/* Daily 7-day Relative Volume Bar Strip with Interactive Hover Count */}
-          <div className="space-y-2">
+          {/* Daily 7-day Relative Volume Bar Strip with Increased Height & Hover Counts */}
+          <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between text-xs sm:text-sm font-mono text-zinc-500">
-              <span className="font-semibold">Daily New Reels Creation (Last 7 Days) — Hover bars for counts</span>
-              <span className="text-emerald-500 font-bold">
-                +{formatNumber(Math.round((currentTrack.scraped_reels_count || 1200) * 0.12))} reels today
+              <span className="font-bold">Daily New Reels Creation (Last 7 Days) — Hover bars for counts</span>
+              <span className="text-emerald-500 font-black">
+                +{formatNumber(Math.round((currentTrack.scraped_reels_count || 102) * 0.12))} reels today
               </span>
             </div>
 
-            <div className="grid grid-cols-7 gap-2.5 h-16 items-end pt-1">
-              {[45, 58, 72, 85, 68, 78, 92].map((height, i) => {
+            <div className="grid grid-cols-7 gap-3 h-28 sm:h-32 items-end pt-2">
+              {[42, 55, 68, 85, 62, 75, 95].map((height, i) => {
                 const isToday = i === 6;
                 const dailyCount = Math.round((currentTrack.scraped_reels_count || 102) * (height / 100) * 0.14);
                 return (
@@ -686,24 +674,26 @@ export default function DashboardOverviewPage() {
                     key={i}
                     onMouseEnter={() => setHoveredBarIndex(i)}
                     onMouseLeave={() => setHoveredBarIndex(null)}
-                    className="relative flex flex-col items-center gap-1.5 h-full justify-end cursor-pointer group"
+                    className="relative flex flex-col items-center gap-2 h-full justify-end cursor-pointer group"
                   >
                     {/* Interactive Count Tooltip on Hover */}
                     {hoveredBarIndex === i && (
-                      <div className="absolute -top-8 px-2 py-0.5 rounded-md bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 text-xs font-mono font-bold shadow-lg animate-fade-in pointer-events-none whitespace-nowrap z-20">
+                      <div className="absolute -top-9 px-2.5 py-1 rounded-lg bg-zinc-950 text-white dark:bg-white dark:text-zinc-950 text-xs font-mono font-black shadow-xl ring-1 ring-zinc-700 animate-fade-in pointer-events-none whitespace-nowrap z-30">
                         +{dailyCount} reels
                       </div>
                     )}
 
-                    <div className="w-full rounded-lg bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex flex-col justify-end h-full">
+                    <div className="w-full rounded-xl bg-zinc-200/70 dark:bg-zinc-800/80 overflow-hidden flex flex-col justify-end h-full p-1">
                       <div
-                        style={{ height: `${height}%` }}
+                        style={{ height: `${Math.max(22, height)}%` }}
                         className={`w-full rounded-lg transition-all duration-300 ${
-                          isToday ? "bg-amber-500 shadow-md group-hover:brightness-110" : "bg-zinc-400/80 dark:bg-zinc-600 group-hover:bg-zinc-500"
+                          isToday
+                            ? "bg-amber-500 shadow-md shadow-amber-500/30 group-hover:brightness-110"
+                            : "bg-zinc-400 dark:bg-zinc-600 group-hover:bg-zinc-500 dark:group-hover:bg-zinc-500"
                         }`}
                       />
                     </div>
-                    <span className="text-xs sm:text-sm font-mono font-bold text-zinc-400">{weekDays[i]}</span>
+                    <span className="text-xs font-mono font-bold text-zinc-500 dark:text-zinc-400">{weekDays[i]}</span>
                   </div>
                 );
               })}
@@ -711,7 +701,7 @@ export default function DashboardOverviewPage() {
           </div>
 
           {/* Live Momentum Pulse Equalizer Bars */}
-          <div className="flex items-center justify-between pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 text-xs sm:text-sm font-mono text-zinc-500">
+          <div className="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800/80 text-xs sm:text-sm font-mono text-zinc-500">
             <span className="font-bold">Live Momentum Pulse</span>
             <div className="flex items-end gap-1.5 h-4.5">
               <span className="w-1.5 bg-purple-500 rounded-full animate-pulse h-2.5" />
